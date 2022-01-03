@@ -1,0 +1,3 @@
+* Michael Bowling talk on DeepStack: www.youtube.com/watch?v=qndXrHcV1sM
+* Noam Brown talk on Libratus: www.youtube.com/watch?v=2dX0lwaQRX0
+* Yannic Kilcher explanation of ReBeL paper: www.youtube.com/watch?v=BhUWvQmLzSk
