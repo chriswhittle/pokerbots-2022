@@ -53,10 +53,9 @@ struct Bot {
         history = BoardActionHistory(active, 0, 0);
 
         // convert card strings to card numbers
-        array<int, HAND_SIZE> card_indices;
         transform(roundState->hands[active].begin(),
                     roundState->hands[active].end(),
-                    card_indices.begin(), card_string_to_index);
+                    hand_indices.begin(), card_string_to_index);
 
         // calculate initial card infostate
         card_infostate = get_cards_info_state_preflop(hand_indices);
@@ -170,13 +169,21 @@ struct Bot {
         // update internal history objects
         update_internal_tracking(pip, villain_pip, pot, street, history);
 
+        if (VERBOSE) {
+            cout << "Updated internal history to " << history << endl;
+        }
+
         // update card infostate to match engine street
         if (street > card_infostate_street) {
             card_infostate = new_card_infostate(street, hand_indices,
-                                                    board_cards, data, N_MC_ITER,
-                                                    // dead, 0);
-                                                    0, 0);
+                                                board_cards, data, N_MC_ITER,
+                                                // dead, 0);
+                                                0, 0);
             card_infostate_street = street;
+
+            if (VERBOSE) {
+                cout << "Updated card infostate to " << card_infostate << endl;
+            }
         }
 
         vector<int> available_actions = history.get_available_actions();
