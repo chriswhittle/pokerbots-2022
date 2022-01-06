@@ -310,7 +310,6 @@ inline void load_equities_from_file(string filename, EquityDict &equities) {
 
 struct DataContainer {
     BucketDict flop_buckets;
-    EquityClusters flop_clusters;
     EquityClusters turn_clusters;
     EquityClusters river_clusters;
 

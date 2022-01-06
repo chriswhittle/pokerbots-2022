@@ -175,7 +175,7 @@ void catch_interrupt(int signum) {
 }
 
 void run_mccfr(int n_cfr_iter, int n_eval_iter, string tag, DataContainer &data) {
-    infosets_path = DATA_PATH + "cfr_train_data/" + GAME + "_infosets_" + tag + ".txt";
+    infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + tag + ".txt";
 
     ifstream infosets_file(infosets_path);
     if (infosets_file.good()) {

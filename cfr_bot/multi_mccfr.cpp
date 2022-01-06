@@ -38,9 +38,9 @@ string DATA_PATH = "../../data/";
 // data structures
 InfosetDict infosets;
 DataContainer data(
-    DATA_PATH + "equity_data/flop_buckets_50.txt",
-    DATA_PATH + "equity_data/turn_clusters_50.txt",
-    DATA_PATH + "equity_data/river_clusters_50.txt");
+    DATA_PATH + "equity_data/flop_buckets_150.txt",
+    DATA_PATH + "equity_data/turn_clusters_150.txt",
+    DATA_PATH + "equity_data/river_clusters_150.txt");
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////// PRODUCER THREAD /////////////////////////////
@@ -267,7 +267,7 @@ void run_mccfr() {
     MultiStats multi_stats;
 
     // if infoset already exists, load in progress
-    infosets_path = DATA_PATH + "cfr_train_data/" + GAME + "_infosets_" + TAG + ".txt";
+    infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + ".txt";
     ifstream infosets_file(infosets_path);
     if (infosets_file.good()) {
         load_infosets_from_file(infosets_path, infosets);
@@ -301,7 +301,7 @@ void run_mccfr() {
 
         if ((i+1) % 50000000 == 0) {
             cout << "Reached iter " << i+1 << ", checkpointing..." << endl;
-            string infosets_path = DATA_PATH + "cfr_train_data/" + GAME + "_infosets_" + TAG + "_checkpoint" + to_string(i+1) + ".txt";
+            string infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + "_checkpoint" + to_string(i+1) + ".txt";
             save_infosets_to_file(infosets_path, infosets);
         }
     }

@@ -194,15 +194,13 @@ void deal_game(
         }
     }
 
-    ULL cur_dead;
-
     // deal complete board
     i = 0;
     while (i < BOARD_SIZE) {
         ind = sample_card_dist();
-        if ((cur_dead & CARD_MASKS_TABLE[ind]) == 0) {
+        if ((dead & CARD_MASKS_TABLE[ind]) == 0) {
             board[i] = ind;
-            cur_dead |= CARD_MASKS_TABLE[ind];
+            dead |= CARD_MASKS_TABLE[ind];
             i++;
         }
     }
