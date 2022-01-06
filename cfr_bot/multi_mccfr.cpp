@@ -86,14 +86,14 @@ void producer(int id) {
         deal_game(board, c1, c2);
 
         // generate bitmasks for player hands and board
-        board_mask = indices_to_mask(board);
+        ULL board_mask = indices_to_mask(board);
 
         // calculate card infostates
         // also pre-compute (board, hand) evaluations
         // hand_strengths[player_num]
         array<int, 2> hand_strengths;
         for (int p = 0; p < 2; p++) {
-            array<int, HAND_SIZE> c = (p == 0) ? c1_hands : c2_hands;
+            array<int, HAND_SIZE> c = (p == 0) ? c1 : c2;
 
             my_round_deal.card_info_states[p] = get_cards_info_state(
                     c, board, data, N_EVAL_ITER);
@@ -216,14 +216,14 @@ pair<double, double> mccfr_top(RoundDeals round_deal, int ind, GameTreeNode &roo
 
     // traverse game tree
     if (VERBOSE) cout << "== BEGIN MCCFR ==" << endl;
-    auto tot_vals = mccfr(
+    auto vals = mccfr(
         round_deal.winner, root,
         round_deal.card_info_states[0],
         round_deal.card_info_states[1]
     );
     if (VERBOSE) cout << "== END MCCFR ==" << endl;
 
-    return tot_vals;
+    return vals;
 }
 
 /////////////////////////////////////
@@ -273,10 +273,6 @@ void run_mccfr() {
     ifstream infosets_file(infosets_path);
     if (infosets_file.good()) {
         load_infosets_from_file(infosets_path, infosets);
-
-        // print current allocation strategies
-        cout << fetch_infoset(infosets, 0, NUM_ALLOCATIONS) << endl;
-        cout << fetch_infoset(infosets, 1, NUM_ALLOCATIONS) << endl << endl;
     }
     cout << "Initial infosets count " << infosets.size() << endl;
 
@@ -316,9 +312,6 @@ void run_mccfr() {
 
     // print infoset state
     cout << "Average button value during train = " << train_val << endl;
-
-    cout << fetch_infoset(infosets, 0, NUM_ALLOCATIONS) << endl;
-    cout << fetch_infoset(infosets, 1, NUM_ALLOCATIONS) << endl;
     cout << "Final infosets count " << infosets.size() << endl;
 
     // save updated infoset

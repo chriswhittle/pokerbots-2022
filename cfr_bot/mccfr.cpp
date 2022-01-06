@@ -160,11 +160,11 @@ pair<double, double> mccfr_top(array<int, BOARD_SIZE> &board,
     BoardActionHistory history(ind, winner, 0);
 
     if (VERBOSE) cout << "== BEGIN MCCFR [" << j << "] ==" << endl;
-    auto tot_vals = mccfr(
+    auto vals = mccfr(
         board, history, card_info_state1, card_info_states2, infosets);
     if (VERBOSE) cout << "== END MCCFR [" << j << "] ==" << endl;
 
-    return tot_vals;
+    return vals;
 }
 
 void catch_interrupt(int signum) {

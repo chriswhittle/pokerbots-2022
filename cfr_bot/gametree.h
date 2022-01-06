@@ -48,7 +48,7 @@ inline ostream& operator<<(ostream& os, GameTreeNode& p) {
 inline GameTreeNode build_game_tree(BoardActionHistory history) {
 
     // make infoset key without card infostate
-    ULL key = info_to_key(history.ind ^ history.button, 0, history.street, 0, history);
+    ULL key = info_to_key(history.ind ^ history.button, history.street, 0, history);
     GameTreeNode new_node(key, history);
 
     vector<int> available_actions = history.get_available_actions();

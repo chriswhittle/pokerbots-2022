@@ -197,8 +197,7 @@ void deal_game(
     ULL cur_dead;
 
     // deal complete board
-    int i = 0;
-
+    i = 0;
     while (i < BOARD_SIZE) {
         ind = sample_card_dist();
         if ((cur_dead & CARD_MASKS_TABLE[ind]) == 0) {

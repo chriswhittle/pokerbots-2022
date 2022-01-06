@@ -130,9 +130,8 @@ inline bool compare_ranks_desc(int a, int b) {
 
 // compute equities and use cluster centers to give bucket
 int get_bucket_from_clusters(
-    ULL hand, ULL board, int num_board,
-    const EquityClusters &clusters, int iterations,
-    ULL common_dead = 0, ULL villain_dead = 0);
+    ULL hand, ULL board, int num_board, const EquityClusters &clusters,
+    int iterations, ULL common_dead = 0, ULL villain_dead = 0);
 
 inline int get_cards_info_state_preflop(array<int, HAND_SIZE> &c) {
     sort(c.begin(), c.end(), compare_ranks_desc);
@@ -146,18 +145,6 @@ inline int get_cards_info_state_preflop(array<int, HAND_SIZE> &c) {
     else { // offsuit
         return ranks[1]*NUM_RANKS + ranks[0];
     }
-}
-
-inline int get_cards_info_state_alloc(array<array<int, HAND_SIZE>, NUM_BOARDS_> c, const DataContainer& data) {
-    int key = 0;
-    int mult = 1;
-    for (auto& hand : c) {
-        int i = get_cards_info_state_preflop(hand);
-        key += i * mult;
-        mult *= NUM_RANKS*NUM_RANKS;
-    }
-    assert(data.alloc_buckets.find(key) != data.alloc_buckets.end());
-    return data.alloc_buckets.at(key);
 }
 
 inline int get_cards_info_state_flop(array<int, HAND_SIZE> c, array<int, FLOP_SIZE> flop, const DataContainer &data) {
