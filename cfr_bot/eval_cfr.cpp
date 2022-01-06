@@ -216,14 +216,10 @@ int main() {
 
     // different data for each player in case we change bucketing
     DataContainer data1(
-        DATA_PATH + "equity_data/alloc_buckets_1.txt",
-        DATA_PATH + "equity_data/preflop_equities.txt",
         DATA_PATH + "equity_data/flop_buckets_150.txt",
         DATA_PATH + "equity_data/turn_clusters_150.txt",
         DATA_PATH + "equity_data/river_clusters_150.txt");
     DataContainer data2(
-        DATA_PATH + "equity_data/alloc_buckets_1.txt",
-        DATA_PATH + "equity_data/preflop_equities.txt",
         DATA_PATH + "equity_data/flop_buckets_150.txt",
         DATA_PATH + "equity_data/turn_clusters_150.txt",
         DATA_PATH + "equity_data/river_clusters_150.txt");

@@ -38,8 +38,6 @@ string DATA_PATH = "../../data/";
 // data structures
 InfosetDict infosets;
 DataContainer data(
-    DATA_PATH + "equity_data/alloc_buckets_1.txt",
-    DATA_PATH + "equity_data/preflop_equities.txt",
     DATA_PATH + "equity_data/flop_buckets_50.txt",
     DATA_PATH + "equity_data/turn_clusters_50.txt",
     DATA_PATH + "equity_data/river_clusters_50.txt");

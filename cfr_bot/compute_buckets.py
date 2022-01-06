@@ -1,7 +1,7 @@
 import os
 from sklearn.cluster import KMeans
 
-DATA_PATH = '../../pokerbots-2021-data/cpp/equity_data/'
+DATA_PATH = '../../data/equity_data/'
 
 N_BUCKETS = 150
 N_ALLOC_BUCKETS = 25

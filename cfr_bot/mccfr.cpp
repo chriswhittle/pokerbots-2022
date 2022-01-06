@@ -180,10 +180,6 @@ void run_mccfr(int n_cfr_iter, int n_eval_iter, string tag, DataContainer &data)
     ifstream infosets_file(infosets_path);
     if (infosets_file.good()) {
         load_infosets_from_file(infosets_path, infosets);
-
-        // print current allocation strategies
-        cout << fetch_infoset(infosets, 0, NUM_ALLOCATIONS) << endl;
-        cout << fetch_infoset(infosets, 1, NUM_ALLOCATIONS) << endl << endl;
     }
     cout << "Initial infosets count " << infosets.size() << endl;
 
@@ -218,8 +214,6 @@ void run_mccfr(int n_cfr_iter, int n_eval_iter, string tag, DataContainer &data)
 int main() {
 
     DataContainer data(
-        DATA_PATH + "equity_data/alloc_buckets_1.txt",
-        DATA_PATH + "equity_data/preflop_equities.txt",
         DATA_PATH + "equity_data/flop_buckets_10.txt",
         DATA_PATH + "equity_data/turn_clusters_10.txt",
         DATA_PATH + "equity_data/river_clusters_10.txt");

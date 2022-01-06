@@ -349,25 +349,15 @@ inline void load_equities_from_file(string filename, EquityDict &equities) {
     infile >> equities;
 }
 
-inline void load_preflop_equities_from_file(string filename, PreflopEquityDict &preflop_equities) {
-    ifstream infile(filename);
-    infile >> preflop_equities;
-}
-
 struct DataContainer {
-    BucketDict alloc_buckets;
     BucketDict flop_buckets;
     EquityClusters flop_clusters;
     EquityClusters turn_clusters;
     EquityClusters river_clusters;
-    PreflopEquityDict preflop_equities;
 
     DataContainer(
-        string alloc_buckets_filename, string preflop_equities_filename,
         string flop_buckets_filename, string turn_clusters_filename,
         string river_clusters_filename) {
-        load_buckets_from_file(alloc_buckets_filename, alloc_buckets);
-        load_preflop_equities_from_file(preflop_equities_filename, preflop_equities);
         load_buckets_from_file(flop_buckets_filename, flop_buckets);
         load_clusters_from_file(turn_clusters_filename, turn_clusters);
         load_clusters_from_file(river_clusters_filename, river_clusters);
