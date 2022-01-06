@@ -19,9 +19,9 @@ mt19937 EVAL_GEN(EVAL_RD());
 int N_EVAL_ITER = 50;
 InfosetDict infosets1, infosets2;
 
-string DATA_PATH = "../../pokerbots-2021-data/cpp/";
-string infosets1_path = DATA_PATH + "cfr_data/cpp_poker_infosets_cwhittle-buckets150_100M.txt";
-string infosets2_path = DATA_PATH + "cfr_data/cpp_poker_infosets_cwhittle-buckets150_final.txt";
+string DATA_PATH = "../../data/";
+string infosets1_path = DATA_PATH + "cfr_data/dev1.txt";
+string infosets2_path = DATA_PATH + "cfr_data/dev2.txt";
 
 struct Stats {
     array<int, 2> boards_folded = {0, 0};
@@ -46,8 +46,8 @@ pair<double, double> run_out_game(InfosetDict &infosets1, InfosetDict &infosets2
                                   int button, Stats &stats, bool verbose = false) {
     if (verbose) cout << "== Game ==" << endl;
     array<array<int, BOARD_SIZE>, NUM_BOARDS_> boards;
-    array<int, NUM_CARDS> c1;
-    array<int, NUM_CARDS> c2;
+    array<int, HAND_SIZE> c1;
+    array<int, HAND_SIZE> c2;
     deal_game(boards, c1, c2);
 
     // both players pair cards according to heuristic

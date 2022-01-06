@@ -30,10 +30,10 @@ const double EPS_GREEDY_EPSILON = 0.1;
 
 // path strings
 string GAME = "cpp_poker";
-string TAG = "cwhittle-buckets50";
+string TAG = "dev";
 
 string infosets_path;
-string DATA_PATH = "../../pokerbots-2021-data/cpp/";
+string DATA_PATH = "../../data/";
 
 // data structures
 InfosetDict infosets;
@@ -51,16 +51,12 @@ DataContainer data(
 struct RoundDeals {
     int prod_id;
 
-    // after cards are paired by heuristic, we have 3 pairs and 3 boards (and 4 streets for each, 2 players)
-    // card_info_states[player][board_num][pair_num][street_num]
-    array<array<array<array<int, NUM_STREETS>, NUM_BOARDS_>, NUM_BOARDS_>, 2> card_info_states;
-
-    // alloc_info_states[player]
-    array<int, 2> alloc_info_states;
+    // 2 players, each with 4 streets of different info states
+    // card_info_states[player][street_num]
+    array<array<int, NUM_STREETS>, 2> card_info_states;
     
-    // we have 3 pairs vs 3 pairs on 3 boards
-    // winner_matrix[board_num][player_pair][villain_pair]
-    array<array<array<int, NUM_BOARDS_>, NUM_BOARDS_>, NUM_BOARDS_> winner_matrix;
+    // which player wins if it gets to showdown
+    int winner;
 };
 
 // queue for each producer thread
@@ -69,10 +65,9 @@ array<boost::lockfree::spsc_queue<RoundDeals, boost::lockfree::capacity<1024>>, 
 vector<boost::thread> prod_threads; // threads global so we can kill them
 
 // producer that:
-// 1) deals out cards (6x2 for each player, 5x3 for each board)
-// 2) pairs up cards for each player using heuristic
-// 3) computes 3x3 board+hand (x4 for streets) infostates (x2 for players)
-// 4) computes 3x3x3 board+hand vs hand winner matrix
+// 1) deals out cards (2 for each player, 5 for the board)
+// 2) computes board+hand (x4 for pf/f/t/r) infostates (x2 for players)
+// 3) computes winner if it gets to showdown
 void producer(int id) {
     // set up producer
     random_device rd;
@@ -84,66 +79,36 @@ void producer(int id) {
     while (!done) {
         RoundDeals my_round_deal{.prod_id = id};
 
-        // deal out boards and cards
-        array<array<int, BOARD_SIZE>, NUM_BOARDS_> boards;
-        array<int, NUM_CARDS> c1;
-        array<int, NUM_CARDS> c2;
-        deal_game(boards, c1, c2);
+        // deal out board and cards
+        array<int, BOARD_SIZE> board;
+        array<int, HAND_SIZE> c1;
+        array<int, HAND_SIZE> c2;
+        deal_game(board, c1, c2);
 
-        // players pair cards according to heuristic
-        allocate_heuristic(c1, data);
-        allocate_heuristic(c2, data);
-
-        // convert to 2D (but keep ordering the same)
-        // ALLOCATIONS[0] = {0,1,2}
-        array<array<int, HAND_SIZE>, NUM_BOARDS_> c1_hands;
-        array<array<int, HAND_SIZE>, NUM_BOARDS_> c2_hands;
-        allocate_hands(ALLOCATIONS[0], c1, c1_hands);
-        allocate_hands(ALLOCATIONS[0], c2, c2_hands);
-
-        // get the alloc infostate
-        int alloc_infostate1 = get_cards_info_state_alloc(c1_hands, data);
-        int alloc_infostate2 = get_cards_info_state_alloc(c2_hands, data);
-        my_round_deal.alloc_info_states = {alloc_infostate1, alloc_infostate2};
+        // generate bitmasks for player hands and board
+        board_mask = indices_to_mask(board);
 
         // calculate card infostates
         // also pre-compute (board, hand) evaluations
-        // hand_strengths[player_num][board_num][hand_num]
-        array<array<array<int, NUM_BOARDS_>, NUM_BOARDS_>, 2> hand_strengths;
+        // hand_strengths[player_num]
+        array<int, 2> hand_strengths;
         for (int p = 0; p < 2; p++) {
-            array<array<int, HAND_SIZE>, NUM_BOARDS_> c = (p == 0) ? c1_hands : c2_hands;
+            array<int, HAND_SIZE> c = (p == 0) ? c1_hands : c2_hands;
 
-            // iterate over boards
-            for (int i = 0; i < NUM_BOARDS_; i++) {
-                ULL board_mask = indices_to_mask(boards[i]);
-                // iterate over hands
-                for (int j = 0; j < NUM_BOARDS_; j++) {
-                    my_round_deal.card_info_states[p][i][j] = get_cards_info_state(
-                            c[j], boards[i], data, N_EVAL_ITER);
+            my_round_deal.card_info_states[p] = get_cards_info_state(
+                    c, board, data, N_EVAL_ITER);
 
-                    ULL c_mask = indices_to_mask(c[j]);
-                    assert((board_mask & c_mask) == 0);
-                    hand_strengths[p][i][j] = evaluate(c_mask | board_mask, 7);
-                }
-            }
+            ULL c_mask = indices_to_mask(c);
+            assert((board_mask & c_mask) == 0);
+            hand_strengths[p] = evaluate(c_mask | board_mask, 7);
         }
 
-        // compute winner matrix
-        // iterate over boards
-        for (int i = 0; i < NUM_BOARDS_; i++) {
-            // iterate over player hands
-            for (int j = 0; j < NUM_BOARDS_; j++) {
-                // iterate over villain hands
-                for (int k = 0; k < NUM_BOARDS_; k++) {
-                    
-                    if (hand_strengths[0][i][j] == hand_strengths[1][i][k]) {
-                        my_round_deal.winner_matrix[i][j][k] = -1;
-                    }
-                    else {
-                        my_round_deal.winner_matrix[i][j][k] = hand_strengths[0][i][j] < hand_strengths[1][i][k];
-                    }
-                }
-            }
+        // compute winner if it gets to showdown
+        if (hand_strengths[0] == hand_strengths[1]) { // tie
+            my_round_deal.winner = -1;
+        }
+        else {
+            my_round_deal.winner = hand_strengths[0] < hand_strengths[1];
         }
 
 	my_queue.push(my_round_deal); // don't care if queue is backed up
@@ -161,7 +126,7 @@ void producer(int id) {
 /////////////////////////////////////
 
 // one-board CFR logic
-pair<double, double> mccfr(int board_num, int winner,
+pair<double, double> mccfr(int winner,
                             GameTreeNode &node,
                             array<int, NUM_STREETS> &card_info_state1,
                             array<int, NUM_STREETS> &card_info_state2) {
@@ -196,7 +161,7 @@ pair<double, double> mccfr(int board_num, int winner,
 
 
     auto& card_info_state = (node.ind == 0) ? card_info_state1 : card_info_state2;
-    ULL key = info_to_key(node.history_key, board_num+1, card_info_state[node.street]);
+    ULL key = info_to_key(node.history_key, card_info_state[node.street]);
 
     CFRInfoset& infoset = fetch_infoset(infosets, key, node.children.size());
 
@@ -211,7 +176,7 @@ pair<double, double> mccfr(int board_num, int winner,
         vector<double> utils(node.children.size());
         pair<double, double> tot_val = {0, 0};
         for (int i = 0; i < node.children.size(); i++) {
-            auto sub_val = mccfr(board_num, winner, node.children[i],
+            auto sub_val = mccfr(winner, node.children[i],
                                 card_info_state1, card_info_state2);
 
             tot_val = tot_val + strategy[i]*sub_val;
@@ -224,7 +189,7 @@ pair<double, double> mccfr(int board_num, int winner,
         }
 
         if (VERBOSE) {
-            cout << "node[" << board_num << "]: " << node << endl;
+            cout << "node: " << node << endl;
             cout << "num acts: " << node.children.size() << endl;
         }
         infoset.record(utils, strategy);
@@ -239,7 +204,7 @@ pair<double, double> mccfr(int board_num, int winner,
         if (VERBOSE) {
             cout << "Sampling child #" << action << endl;
         }
-        return mccfr(board_num, winner, node.children[action],
+        return mccfr(winner, node.children[action],
                         card_info_state1, card_info_state2);
 
     }
@@ -247,52 +212,16 @@ pair<double, double> mccfr(int board_num, int winner,
 
 // performs allocate stage before recursing into one-board tree
 // 0 = button (SB), 1 = non-button (BB) for traverser (traverser in first index)
-pair<double, double> mccfr_top(RoundDeals round_deal, int ind, array<GameTreeNode, NUM_BOARDS_> &roots) {
+pair<double, double> mccfr_top(RoundDeals round_deal, int ind, GameTreeNode &root) {
 
-    // villain randomly picks an allocation from strategy
-    ULL villain_key = info_to_key(1-ind, 0, round_deal.alloc_info_states[1-ind]);
-    auto villain_infoset = fetch_infoset(infosets, villain_key, NUM_ALLOCATIONS);
-    int villain_allocation = villain_infoset.get_action_index(EPS_GREEDY_EPSILON);
-
-    // get player's strategy for allocation
-    ULL my_key = info_to_key(ind, 0, round_deal.alloc_info_states[ind]);
-    CFRInfoset& infoset = fetch_infoset(infosets, my_key, NUM_ALLOCATIONS);
-    vector<double> strategy = infoset.get_regret_matching_strategy();
-    assert(strategy.size() == NUM_ALLOCATIONS);
-
-    pair<double, double> tot_vals = {0, 0};
-
-    // traverse allocation choices
-    vector<double> utils(NUM_ALLOCATIONS);
-    for (int i = 0; i < NUM_ALLOCATIONS; i++) {
-        pair<double, double> board_tot_vals = {0, 0};
-
-        // do traversal for each board
-        for (int j = 0; j < NUM_BOARDS_; j++) {
-            
-            if (VERBOSE) cout << "== BEGIN MCCFR [" << j << "] ==" << endl;
-            auto sub_vals = mccfr(
-                j, round_deal.winner_matrix[j][ALLOCATIONS[i][j]][ALLOCATIONS[villain_allocation][j]],
-                //               this board=^  ^=which pair is in board j for allocation i ^ which pair is in board j for villain allocation
-                roots[j],
-                round_deal.card_info_states[0][j][ALLOCATIONS[i][j]],
-                round_deal.card_info_states[1][j][ALLOCATIONS[villain_allocation][j]]
-            );
-            if (VERBOSE) cout << "== END MCCFR [" << j << "] ==" << endl;
-
-            board_tot_vals = board_tot_vals + sub_vals;
-        }
-
-        tot_vals = tot_vals + strategy[i] * board_tot_vals;
-        utils[i] = board_tot_vals.first;
-    }
-
-    // utils -> regrets
-    for (int i = 0; i < NUM_ALLOCATIONS; i++) {
-        utils[i] -= tot_vals.first;
-    }
-
-    infoset.record(utils, strategy);
+    // traverse game tree
+    if (VERBOSE) cout << "== BEGIN MCCFR ==" << endl;
+    auto tot_vals = mccfr(
+        round_deal.winner, root,
+        round_deal.card_info_states[0],
+        round_deal.card_info_states[1]
+    );
+    if (VERBOSE) cout << "== END MCCFR ==" << endl;
 
     return tot_vals;
 }
@@ -357,12 +286,10 @@ void run_mccfr() {
     // traverse and cache game tree (one for each button position)
     // also need to cache trees for different antes since it changes pot size
     // and affects bet sizings => different trees
-    array<array<GameTreeNode, NUM_BOARDS_>, 2> roots;
+    array<GameTreeNode, 2> roots;
     for (int btn = 0; btn < 2; btn++) {
-        for (int i = 0; i < NUM_BOARDS_; i++) {
-            BoardActionHistory history(btn, 0, BOARD_ANTES[i]);
-            roots[btn][i] = build_game_tree(history);
-        }
+        BoardActionHistory history(btn, 0, 0);
+        roots[btn] = build_game_tree(history);
     }
 
     pair<double, double> train_val = {0, 0};

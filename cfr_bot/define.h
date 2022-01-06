@@ -20,12 +20,6 @@ constexpr int NUM_RANGES = 8;
 extern const int NUM_RANGE[8];
 extern unsigned long long RANGES[8][460];
 
-// hand allocation
-constexpr int NUM_PAIRINGS = 15;
-extern const int PAIRINGS[15][3][2];
-constexpr int NUM_ALLOCATIONS = 6;
-extern const int ALLOCATIONS[6][3];
-
 // nice array printing
 template<typename T, size_t N>
 inline ostream& operator<<(ostream& os, const array<T, N>& p) {

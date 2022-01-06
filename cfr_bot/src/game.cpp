@@ -170,69 +170,23 @@ vector<int> BoardActionHistory::get_available_actions() const {
     return possible_actions;
 }
 
-// heuristic for pairing up cards before allocation
-void allocate_heuristic(array<int, NUM_CARDS> &c, const DataContainer &data) {
-    int best_pairing = 0;
-    float highest_total_equity = 0;
-    array<float, NUM_BOARDS_> pair_equities;
-    float e;
-
-    // calculate equities for all pairings
-    for (int i = 0; i < NUM_PAIRINGS; i++) {
-        array<float, NUM_BOARDS_> cur_pair_equities;
-
-        // get equities for pair in pairings
-        for (int j = 0; j < NUM_BOARDS_; j ++) {
-            e = data.preflop_equities.at(preflop_card_indices_to_index(c[PAIRINGS[i][j][0]], c[PAIRINGS[i][j][1]]));
-            cur_pair_equities[j] = e;
-        }
-
-        // sort equities and multiply by pot antes
-        array<float, NUM_BOARDS_> sorted_pair_equities = cur_pair_equities;
-        sort(sorted_pair_equities.begin(), sorted_pair_equities.end());
-        float total_equity = 0;
-        for (int j = 0; j < NUM_BOARDS_; j++) {
-            total_equity += sorted_pair_equities[j] * BOARD_ANTES[j];
-        }
-
-        // track highest equity pairing
-        if (total_equity > highest_total_equity) {
-            highest_total_equity = total_equity;
-            best_pairing = i;
-            pair_equities = cur_pair_equities;
-        }
-    }
-
-    // sort highest equity pairing according to equity of each pair
-    int new_c[NUM_CARDS];
-    int j = 0;
-    for (auto i : sort_indexes<float, NUM_BOARDS_>(pair_equities)) {
-        new_c[j++] = c[PAIRINGS[best_pairing][i][0]];
-        new_c[j++] = c[PAIRINGS[best_pairing][i][1]];
-    }
-
-    for (int i = 0; i < NUM_CARDS; i++) {
-        c[i] = new_c[i];
-    }
-}
-
-// deal NUM_BOARDS_ boards to the river and two hands
+// deal a board to the river and two hands
 void deal_game(
-    array<array<int, BOARD_SIZE>, NUM_BOARDS_> &boards,
-    array<int, NUM_CARDS> &c1, array<int, NUM_CARDS> &c2) {
+    array<int, BOARD_SIZE> &board,
+    array<int, HAND_SIZE> &c1, array<int, HAND_SIZE> &c2) {
     ULL dead = 0;
     int ind;
 
     // deal hands
     int i = 0;
-    while (i < 2*NUM_CARDS) {
+    while (i < 2*HAND_SIZE) {
         ind = sample_card_dist();
         if ((dead & CARD_MASKS_TABLE[ind]) == 0) {
-            if (i < NUM_CARDS) {
+            if (i < HAND_SIZE) {
                 c1[i] = ind;
             }
             else {
-                c2[i - NUM_CARDS] = ind;
+                c2[i - HAND_SIZE] = ind;
             }
 
             dead |= CARD_MASKS_TABLE[ind];
@@ -242,20 +196,16 @@ void deal_game(
 
     ULL cur_dead;
 
-    // deal complete boards
-    for (int i = 0; i < NUM_BOARDS_; i++) {
-        cur_dead = dead;
-        int j = 0;
+    // deal complete board
+    int i = 0;
 
-        while (j < BOARD_SIZE) {
-            ind = sample_card_dist();
-            if ((cur_dead & CARD_MASKS_TABLE[ind]) == 0) {
-                boards[i][j] = ind;
-                cur_dead |= CARD_MASKS_TABLE[ind];
-                j++;
-            }
+    while (i < BOARD_SIZE) {
+        ind = sample_card_dist();
+        if ((cur_dead & CARD_MASKS_TABLE[ind]) == 0) {
+            board[i] = ind;
+            cur_dead |= CARD_MASKS_TABLE[ind];
+            i++;
         }
-
     }
 
     return;

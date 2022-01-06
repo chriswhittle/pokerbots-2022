@@ -127,7 +127,7 @@ int get_bucket_from_clusters(
     return bucket;
 }
 
-ULL info_to_key(int player_ind, int board, int street, int card_info, BoardActionHistory &history) {
+ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &history) {
     ULL key = 0;
 
     int shift = 0;
@@ -135,12 +135,6 @@ ULL info_to_key(int player_ind, int board, int street, int card_info, BoardActio
     assert(player_ind >= 0);
     key |= player_ind;
     shift += SHIFT_PLAYER_IND;
-
-    assert(board >= 0);
-    ULL board_bits = (ULL) board << shift;
-    assert((key & board_bits) == 0);
-    key |= board_bits;
-    shift += SHIFT_BOARD_NUM;
 
     assert(street >= 0);
     ULL street_bits = (ULL) street << shift;
@@ -166,13 +160,8 @@ ULL info_to_key(int player_ind, int board, int street, int card_info, BoardActio
     return key;
 }
 
-ULL info_to_key(ULL history_key, int board, int card_info) {
+ULL info_to_key(ULL history_key, int card_info) {
     ULL key = history_key;
-
-    assert(board >= 0);
-    ULL board_bits = (ULL) board << SHIFT_PLAYER_IND;
-    assert((key & board_bits) == 0);
-    key |= board_bits;
     
     assert(card_info >= 0);
     ULL card_bits = (ULL) card_info << SHIFT_CARD_INFO_TOTAL;

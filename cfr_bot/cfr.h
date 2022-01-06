@@ -219,13 +219,12 @@ inline array<int, NUM_STREETS> get_cards_info_state(
 }
 
 const int SHIFT_PLAYER_IND = 1; // 1 bit for player position
-const int SHIFT_BOARD_NUM = 2; // 2 bits for board number; 0 = unallocated, 1,2,3
 const int SHIFT_STREET = 2; // 2 bits for street
 const int SHIFT_CARD_INFO = 8; // 8 bits for card info
 const int SHIFT_ACTIONS = 3; // 3 bits per action
-ULL info_to_key(int player_ind, int board, int street, int card_info, BoardActionHistory &history);
+ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &history);
 
-const int SHIFT_CARD_INFO_TOTAL = SHIFT_PLAYER_IND + SHIFT_BOARD_NUM + SHIFT_STREET;
-ULL info_to_key(ULL history_key, int board, int card_info);
+const int SHIFT_CARD_INFO_TOTAL = SHIFT_PLAYER_IND + SHIFT_STREET;
+ULL info_to_key(ULL history_key, int card_info);
 
 #endif

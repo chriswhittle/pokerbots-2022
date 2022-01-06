@@ -7,7 +7,7 @@ using namespace std;
 
 struct GameTreeNode {
     vector<GameTreeNode> children;
-    ULL history_key; // infoset key without board_num and cardinfo
+    ULL history_key; // infoset key without cardinfo
 
     // net change in chips for p1; assumes p1 wins
     // (should be negated if cards favour villain)
@@ -47,7 +47,7 @@ inline ostream& operator<<(ostream& os, GameTreeNode& p) {
 // recurse down game tree node
 inline GameTreeNode build_game_tree(BoardActionHistory history) {
 
-    // make infoset key without board_num or card infostate
+    // make infoset key without card infostate
     ULL key = info_to_key(history.ind ^ history.button, 0, history.street, 0, history);
     GameTreeNode new_node(key, history);
 

@@ -26,10 +26,7 @@ const int TURN_SIZE = 4;
 const int BOARD_SIZE = 5;
 const int NUM_STREETS = 4;
 
-const int NUM_BOARDS_ = 3;
-const int NUM_CARDS = HAND_SIZE*NUM_BOARDS_;
 const int BIG_BLIND = 2;
-const int BOARD_ANTES[3] = {1*BIG_BLIND, 2*BIG_BLIND, 3*BIG_BLIND};
 const int STARTING_STACK = 100*BIG_BLIND;
 
 const int NUM_RANKS = 13;
@@ -95,23 +92,9 @@ inline ostream& operator<<(ostream& os, BoardActionHistory& p) {
     return os;
 }
 
-// shuffle cards around given an allocation
-inline void allocate_hands(
-    const int allocation[NUM_BOARDS_], array<int, NUM_CARDS> c,
-    array<array<int, HAND_SIZE>, NUM_BOARDS_> &c_out) {
-    for (int i = 0; i < NUM_BOARDS_; i++) {
-        for (int j = 0; j < HAND_SIZE; j++) {
-            c_out[i][j] = c[allocation[i]*HAND_SIZE+j];
-        }
-    }
-}
-
-// heuristic for pairing up cards before allocation
-void allocate_heuristic(array<int, NUM_CARDS> &c, const DataContainer &data);
-
-// deal NUM_BOARDS_ boards to the river and two hands
+// deal board to the river and two hands
 void deal_game(
-    array<array<int, BOARD_SIZE>, NUM_BOARDS_> &boards,
-    array<int, NUM_CARDS> &c1, array<int, NUM_CARDS> &c2);
+    array<int, BOARD_SIZE> &board,
+    array<int, HAND_SIZE> &c1, array<int, HAND_SIZE> &c2);
 
 #endif
