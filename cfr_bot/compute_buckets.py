@@ -36,10 +36,9 @@ def savefile_clusters(clusters, filename):
 if __name__ == "__main__":
     # standard equity bucketing against N ranges
     streets_to_bucket = [
-        #('full_', 'alloc', True, N_ALLOC_BUCKETS),
-#         ('', 'flop', True, N_BUCKETS),
+         ('', 'flop', True, N_BUCKETS),
          ('', 'turn', False, N_BUCKETS),
-#         ('', 'river', False, N_BUCKETS),
+         ('', 'river', False, N_BUCKETS),
     ]
 
     for prefix, street, has_id, n in streets_to_bucket:

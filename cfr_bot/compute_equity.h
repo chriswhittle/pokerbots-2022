@@ -293,47 +293,6 @@ inline int preflop_card_indices_to_index(int c1, int c2) {
     return rank1*26 + rank2;
 }
 
-inline void save_preflop_equities_to_file(string filename, int iterations = 1000000) {
-
-    PreflopEquityDict equities;
-
-    vector<vector<int>> hand_rank_combos;
-    get_rank_combos(hand_rank_combos, 2);
-
-    tqdm pbar;
-    for (int i = 0; i < hand_rank_combos.size(); i++) {
-        pbar.progress(i, hand_rank_combos.size());
-
-        for (int suited = 0; suited <= 1; suited++) {
-
-            int first_index = hand_rank_combos[i][0];
-            int second_index = hand_rank_combos[i][1];
-            
-            if ((first_index != second_index) || (suited == 0)) {
-
-                unsigned long long hand = CARD_MASKS_TABLE[first_index];
-                if (suited == 0 || (hand_rank_combos[i][0] == hand_rank_combos[i][1])) {
-                    second_index += 13;
-                }
-                hand |= CARD_MASKS_TABLE[second_index];
-
-                float equity = hand_vs_random_monte_carlo(hand, 0, 0, iterations);
-
-                equities[first_index*26 + second_index] = equity;
-
-            }
-
-        }
-
-    }
-
-    {
-        ofstream outfile(filename);
-        outfile << equities;
-    }
-
-}
-
 inline void load_clusters_from_file(string filename, EquityClusters &clusters) {
     ifstream infile(filename);
     infile >> clusters;

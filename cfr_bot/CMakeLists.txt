@@ -25,3 +25,8 @@ add_executable(multi_mccfr multi_mccfr.cpp)
 target_link_libraries(multi_mccfr PUBLIC ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
 target_link_libraries(multi_mccfr PRIVATE pthread cfr_lib eval7pp)
 target_include_directories(multi_mccfr PRIVATE ../cpptqdm)
+
+add_executable(run_equity_calcs run_equity_calcs.cpp)
+target_link_libraries(run_equity_calcs PUBLIC ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY})
+target_link_libraries(run_equity_calcs PRIVATE pthread cfr_lib eval7pp)
+target_include_directories(run_equity_calcs PRIVATE ../cpptqdm)
