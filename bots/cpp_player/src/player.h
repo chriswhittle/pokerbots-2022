@@ -10,6 +10,7 @@
 // converting between engine cards and internal logic cards
 const array<char, NUM_RANKS> RANKS = {'2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'};
 const array<char, NUM_SUITS> SUITS = {'s', 'h', 'd', 'c'};
+using Card = std::string;
 
 int card_string_to_index(Card c) {
     return NUM_RANKS*distance(SUITS.begin(), find(SUITS.begin(), SUITS.end(), c.at(1)))
@@ -34,9 +35,6 @@ ostream& operator<<(ostream& os, Action& p) {
             break;
         case Action::FOLD:
             os << "fold";
-            break;
-        case Action::ASSIGN:
-            os << "assign";
             break;
     }
     return os;
