@@ -159,10 +159,10 @@ pair<double, double> mccfr_top(array<int, BOARD_SIZE> &board,
     // initialize empty action history
     BoardActionHistory history(ind, winner, 0);
 
-    if (VERBOSE) cout << "== BEGIN MCCFR [" << j << "] ==" << endl;
+    if (VERBOSE) cout << "== BEGIN MCCFR ==" << endl;
     auto vals = mccfr(
         board, history, card_info_state1, card_info_states2, infosets);
-    if (VERBOSE) cout << "== END MCCFR [" << j << "] ==" << endl;
+    if (VERBOSE) cout << "== END MCCFR ==" << endl;
 
     return vals;
 }
@@ -204,8 +204,6 @@ void run_mccfr(int n_cfr_iter, int n_eval_iter, string tag, DataContainer &data)
     }
     cout << "Average button value during train = " << train_val << endl;
 
-    cout << fetch_infoset(infosets, 0, NUM_ALLOCATIONS) << endl;
-    cout << fetch_infoset(infosets, 1, NUM_ALLOCATIONS) << endl;
     cout << "Final infosets count " << infosets.size() << endl;
 
     save_infosets_to_file(infosets_path, infosets);
