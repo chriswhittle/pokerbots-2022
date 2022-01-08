@@ -16,6 +16,9 @@ using namespace std;
 random_device EVAL_RD;
 mt19937 EVAL_GEN(EVAL_RD());
 
+const bool VERBOSE = false;
+const int N_RUNOUTS = 2000000;
+
 int N_EVAL_ITER = 50;
 InfosetDict infosets1, infosets2;
 
@@ -195,14 +198,13 @@ void eval_cfr(const DataContainer& data1, const DataContainer& data2) {
     Stats stats;
     pair<double, double> tot_vals;
     vector<double> val_samples;
-    const int n_runouts = 2000000;
     tqdm pbar;
-    for (int i = 0; i < n_runouts; ++i) {
-        pbar.progress(i, n_runouts);
+    for (int i = 0; i < N_RUNOUTS; ++i) {
+        pbar.progress(i, N_RUNOUTS);
         int button = i % 2; // alternate button
         pair<double, double> val = run_out_game(
-            infosets1, infosets2, data1, data2, button, stats, false);
-        tot_vals = tot_vals + (1. / n_runouts) * val;
+            infosets1, infosets2, data1, data2, button, stats, VERBOSE);
+        tot_vals = tot_vals + (1. / N_RUNOUTS) * val;
         val_samples.push_back(val.first);
     }
     pair<double, double> boot_val = bootstrap(val_samples, 100);

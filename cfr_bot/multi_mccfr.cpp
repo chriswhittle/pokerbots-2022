@@ -24,9 +24,11 @@ using namespace std;
 const bool VERBOSE = false;
 
 // MCCFR constants
-const int N_CFR_ITER = 300000000;
+const int N_CFR_ITER = 2000000000;
+const int N_CFR_CHECKPOINTS = 100000000;
 const int N_EVAL_ITER = 100;
-const double EPS_GREEDY_EPSILON = 0.1;
+// const double EPS_GREEDY_EPSILON = 0.1;
+const double EPS_GREEDY_EPSILON = 0.;
 
 // path strings
 string GAME = "cpp_poker";
@@ -123,7 +125,6 @@ void producer(int id) {
 ////////// CFR LOGIC ////////////////
 /////////////////////////////////////
 
-// one-board CFR logic
 pair<double, double> mccfr(int winner,
                             GameTreeNode &node,
                             array<int, NUM_STREETS> &card_info_state1,
@@ -149,8 +150,7 @@ pair<double, double> mccfr(int winner,
         }
         // showdown without chop
         else {
-            // gametree doesn't keep track of antes, add ante/2
-            // (node assumes player won)
+            // node assumes player won
             assert(node.won > 0);
             int winner_mult = (winner == 0) ? 1 : -1;
             return make_pair(node.won * winner_mult, -node.won * winner_mult);
@@ -299,7 +299,7 @@ void run_mccfr() {
         auto val = mccfr_top(round_deal, ind, roots[ind]);
         train_val = train_val + (1./N_CFR_ITER) * val;
 
-        if ((i+1) % 50000000 == 0) {
+        if ((i+1) % N_CFR_CHECKPOINTS == 0) {
             cout << "Reached iter " << i+1 << ", checkpointing..." << endl;
             string infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + "_checkpoint" + to_string(i+1) + ".txt";
             save_infosets_to_file(infosets_path, infosets);
@@ -328,7 +328,7 @@ int main() {
     run_mccfr();
 
     for (int i = 0; i < N_THREADS; ++i) {
-	prod_threads[i].join();
+	    prod_threads[i].join();
     }
 
     cout << "Main thread done." << endl;

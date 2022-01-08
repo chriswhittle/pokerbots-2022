@@ -95,5 +95,21 @@ inline string pretty_card(int c) {
     return ranks[c % 13] + suits[c / 13];
 }
 
+template <size_t N>
+inline string pretty_card(array<int, N> &cards) {
+    string card_string = "";
+    for (int i = 0; i < N; i++) {
+        card_string = card_string + pretty_card(cards[i]) + " ";
+    }
+    return card_string;
+}
+
+inline string pretty_card(vector<int> &cards) {
+    string card_string = "";
+    for (int i = 0; i < cards.size(); i++) {
+        card_string = card_string + pretty_card(cards[i]) + " ";
+    }
+    return card_string;
+}
 
 #endif

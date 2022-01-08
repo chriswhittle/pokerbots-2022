@@ -19,9 +19,6 @@
 
 using namespace std;
 
-// modify CMakeLists.txt to have
-// add_executable(${PROJECT_NAME} multi_mccfr_kuhn.cpp)
-
 // run settings
 #define N_THREADS 8
 
@@ -30,7 +27,8 @@ const bool VERBOSE = false;
 // MCCFR constants
 const int N_CFR_ITER = 1000000;
 const int N_EVAL_ITER = 100;
-const double EPS_GREEDY_EPSILON = 0.1;
+// const double EPS_GREEDY_EPSILON = 0.1;
+const double EPS_GREEDY_EPSILON = 0;
 
 // path strings
 string GAME = "cpp_kuhn_poker";
@@ -76,12 +74,13 @@ void producer(int id) {
     while (!done) {
         RoundDeals my_round_deal{.prod_id = id};
 
-        int a, b;
+        int a = 0, b = 0;
         while (a == b) {
             a = dis(gen)%3;
             b = dis(gen)%3;
         }
         my_round_deal.card_info_states = {a, b};
+
 	my_queue.push(my_round_deal); // don't care if queue is backed up
     }
 
@@ -123,14 +122,13 @@ pair<double, double> mccfr(
 
         // if no showdown, just return amount won according to history
         if (!node.showdown) {
-            assert(won != 0);
+            assert(node.won != 0);
             return make_pair(node.won, -node.won);
         }
         // showdown without chop
         else {
-            // gametree doesn't keep track of antes, add ante/2
-            // (node assumes player won)
-            assert(won > 0);
+            // node assumes player won
+            assert(node.won > 0);
             int winner_mult = (card_info_states[0] > card_info_states[1]) ? 1 : -1;
             return make_pair(node.won * winner_mult, -node.won * winner_mult);
         }
@@ -142,15 +140,6 @@ pair<double, double> mccfr(
 
     assert(infoset.cumu_regrets.size() == node.children.size());
 
-    // std::bitset<64> x(key);
-    // cout << x << ", " << node << ";" << endl;
-    if (infoset.t == 0) {
-        unvisited++;
-        std::bitset<64> x(key);
-        cout << x << ", " << node << ";" << endl;
-        exit(EXIT_FAILURE);
-    }
-
     // our (traverser's) action
     if (node.ind == 0) {
 
@@ -160,6 +149,7 @@ pair<double, double> mccfr(
         vector<double> utils(node.children.size());
         pair<double, double> tot_val = {0, 0};
         for (int i = 0; i < node.children.size(); i++) {
+            
             auto sub_val = mccfr(node.children[i], card_info_states);
 
             tot_val = tot_val + strategy[i]*sub_val;
@@ -175,6 +165,7 @@ pair<double, double> mccfr(
             cout << "num acts: " << node.children.size() << endl;
         }
         infoset.record(utils, strategy);
+
         return tot_val;
     }
     // villain's action
@@ -255,6 +246,8 @@ void run_mccfr() {
     // save infoset on ctrl-C
     signal(SIGINT, catch_interrupt);
 
+    cout << "Starting traversal..." << endl;
+
     // traverse and cache game tree (one for each button position)
     // (history_key, won, ind, button, street, finished, showdown)
     // actions are (1,2)
@@ -291,7 +284,7 @@ void run_mccfr() {
 
     // MCCFR loop
     tqdm pbar;
-    for (int i = 1; i < N_CFR_ITER; ++i) {
+    for (int i = 0; i < N_CFR_ITER; ++i) {
         pbar.progress(i, N_CFR_ITER);
 
         int ind = i%2; // alternate position
@@ -306,7 +299,6 @@ void run_mccfr() {
     // print infoset state
     cout << "Average button value during train = " << train_val << endl;
 
-    cout << fetch_infoset(infosets, 0, NUM_ALLOCATIONS) << endl;
     cout << "Final infosets count " << infosets.size() << endl;
 
     cout << "Unvisited info sets " << unvisited << endl;

@@ -91,13 +91,10 @@ struct Bot {
     Action getAction(
             GameInfoPtr gameState, RoundStatePtr roundState, int active) {
         auto _timer_start = high_resolution_clock::now();
-        auto myCards = roundState->hands[active];
         Action proposed_action;
         double proposed_action_prob = 0;
 
         auto legal_actions = roundState->legalActions();
-        
-        bool still_playing = false;
 
         int stack = roundState->stacks[active];
         int villain_stack = roundState->stacks[1-active];
@@ -112,6 +109,12 @@ struct Bot {
             cout << "<<Stacks = " << stack << ", " << villain_stack
                  << "; street = " << street << ">>" << endl << endl;
         }
+
+        // update our internal tracking of hole cards
+        // convert card strings to card numbers
+        transform(roundState->hands[active].begin(),
+                    roundState->hands[active].end(),
+                    hand_indices.begin(), card_string_to_index);
 
         // once we see new cards on the boards, add them to our
         // memory of the board cards
@@ -148,9 +151,6 @@ struct Bot {
             return proposed_action;
         }
 
-        // if we make it this far we're still playing this board
-        still_playing = true;
-
         // update internal representation of game tree
         // and of cards in hand + on board
         int pip = roundState->pips[active];
@@ -163,7 +163,10 @@ struct Bot {
 
         if (VERBOSE) {
             cout << "Pot = " << pot << "; engine pip = " << pip << ", " << villain_pip << endl;
+            cout << "Hole cards: " << roundState->hands[active] << endl;
             cout << "Board cards: " << roundState->deck << endl;
+            cout << "Hole cards (interpreted): " << pretty_card(hand_indices) << endl;
+            cout << "Board cards (interpreted): " << pretty_card(board_cards) << endl;
         }
 
         // update internal history objects
