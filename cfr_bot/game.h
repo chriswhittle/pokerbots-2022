@@ -15,10 +15,10 @@ const int CHECK_CALL = 2;
 
 // relative to pot size
 const int BET = 3;
-const array<float, 2> BET_SIZES = {0.67, 100}; // 2 bet sizes, 100 = all-in
+const vector<float> BET_SIZES = {0.67, 1.75, 100}; // 3 bet sizes, 100 = all-in
 
 const int RAISE = 3 + BET_SIZES.size();
-const array<float, 2> RAISE_SIZES = {1, 100}; // 2 raise sizes, 100 = all-in
+const vector<float> RAISE_SIZES = {1, 100}; // 2 raise sizes, 100 = all-in
 
 const int HAND_SIZE = 2;
 const int FLOP_SIZE = 3;

@@ -16,12 +16,6 @@ import argparse
 import eval7
 
 import matplotlib
-matplotlib.use('agg')
-plt.rcParams.update({
-    'figure.figsize': (14, 9),
-    'axes.xmargin': 0,
-    'font.size': 16
-})
 
 RANKS = {k:v for k,v in zip('23456789TJQKA',list(range(13)))}
 CARDS = {f'{r}{s}': eval7.Card(f'{r}{s}') for r in RANKS.keys() for s in 'schd'}
@@ -40,7 +34,7 @@ def parse_logs(path):
             num_rounds = int(line.split('#')[1].split(',')[0])
 
     # initialize deltas with bonus chips in pot
-    deltas = {'A': np.zeros(num_rounds), 'B': np.zeros(num_rounds)}
+    deltas = {'A': np.zeros(num_rounds+1), 'B': np.zeros(num_rounds+1)}
 
     # save hand histories for sorting later
     histories = []   
@@ -54,13 +48,13 @@ def parse_logs(path):
 
             histories += ['']
         elif 'awarded' in line:
-            deltas[line[0]][round_num-1] = int(line.split(' ')[-1])
+            deltas[line[0]][round_num] = int(line.split(' ')[-1])
 
         if len(histories) > 0:
             histories[-1] += line + '\n'
     
     # sort hand logs by amount won/lost
-    histories = [s for _, s in sorted(zip(np.abs(deltas['A']), histories), reverse=True)]
+    histories = [s for _, s in sorted(zip(np.abs(deltas['A'][1:]), histories), reverse=True)]
 
     return deltas, histories
 
@@ -84,8 +78,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("logpath", help="path to the logfile")
     parser.add_argument("-o", "--out", help="prefix for output")
+    parser.add_argument("-w", "--window", help="show chip plot in window", dest='window', action='store_true')
+    parser.set_defaults(window=False)
     args = parser.parse_args()
 
+    if not args.window:
+        matplotlib.use('agg')
+    plt.rcParams.update({
+        'figure.figsize': (14, 9),
+        'axes.xmargin': 0,
+        'font.size': 16
+    })
+
+    
     if not os.path.exists('output'):
         os.makedirs('output')
     out_prefix = args.out if args.out else f"output/{os.path.splitext(os.path.basename(args.logpath))[0]}"
@@ -99,3 +104,6 @@ if __name__ == "__main__":
     # save hand histories sorted by amount won/lost
     with open(f'{out_prefix}_sorted.txt', 'w') as file:
         file.write('\n'.join(histories))
+
+    if args.window:
+        plt.show()
