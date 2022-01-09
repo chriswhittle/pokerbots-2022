@@ -1,5 +1,6 @@
 import os
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
+from tqdm import tqdm
 
 DATA_PATH = '../../data/equity_data/'
 
@@ -9,13 +10,14 @@ def loadfile(filename, has_id=True):
     ids = []
     points = []
     with open(filename) as file:
-        for line in file.readlines():
+        for line in tqdm(file):
             l = line.replace('\n', '').split(' ')
-            if has_id:
-                points += [[float(x) for x in l[1:]]]
-                ids += [int(l[0])]
-            else:
-                points += [[float(x) for x in l]]
+            if len(l) > 0:
+                if has_id:
+                    points += [[float(x) for x in l[1:]]]
+                    ids += [int(l[0])]
+                else:
+                    points += [[float(x) for x in l]]
     
     if has_id:
         return ids, points
@@ -35,21 +37,19 @@ def savefile_clusters(clusters, filename):
 if __name__ == "__main__":
     # standard equity bucketing against N ranges
     streets_to_bucket = [
-         ('', 'flop', True, N_BUCKETS),
+        ('', 'flop', True, N_BUCKETS),
          ('', 'turn', False, N_BUCKETS),
          ('', 'river', False, N_BUCKETS),
     ]
 
     for prefix, street, has_id, n in streets_to_bucket:
+        print("Loading equities...")
         points = loadfile(os.path.join(DATA_PATH, f'{prefix}{street}_equities.txt'), has_id)
         if has_id:
             ids, points = points
-        kmeans = KMeans(n_clusters=n, random_state=0, verbose=1).fit(points)
+        print("Computing k-means...")
+        kmeans = MiniBatchKMeans(n_clusters=n, random_state=0, verbose=1).fit(points)
 
         if has_id:
             savefile_labels(ids, kmeans.labels_, os.path.join(DATA_PATH, f'{street}_buckets_{n}.txt'))
-        else:
-            savefile_clusters(kmeans.cluster_centers_, os.path.join(DATA_PATH, f'{street}_clusters_{n}.txt'))
-
-        if street == 'flop':            
-            savefile_clusters(kmeans.cluster_centers_, os.path.join(DATA_PATH, f'{street}_clusters_{n}.txt'))
+        savefile_clusters(kmeans.cluster_centers_, os.path.join(DATA_PATH, f'{street}_clusters_{n}.txt'))
