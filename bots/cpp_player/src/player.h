@@ -47,6 +47,8 @@ bool harmonic_analysis(float lower_bound, float upper_bound, float value_to_map)
     float mapping_prob = ((upper_bound - value_to_map)*(1 + lower_bound))
                                     /((upper_bound - lower_bound)*(1 + value_to_map));
     float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    cout << "Rounding action to lower size with probability "
+        << mapping_prob << ": " << ((r < mapping_prob) ? "SUCCESS" : "FAILURE") << endl;
     return r < mapping_prob;
 }
 
@@ -277,7 +279,8 @@ Action map_infoset_action_to_action(int action, int pip,
     else if (action >= RAISE) {
         cout << "Action mapping: raise " << RAISE_SIZES[action-RAISE] << " * pot -> ";
         
-        int raise = min((int) (pip + (pot + villain_pip*2) * RAISE_SIZES[action-RAISE]), min(stack+pip, villain_stack+villain_pip));
+        int raise = min((int) (villain_pip + (pot + villain_pip*2) * RAISE_SIZES[action-RAISE]),
+                                min(stack+pip, villain_stack+villain_pip));
 
         if (villain_stack == 0 || stack <= villain_pip) {
             cout << "call" << endl;

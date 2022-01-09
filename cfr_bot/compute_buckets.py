@@ -4,7 +4,6 @@ from sklearn.cluster import KMeans
 DATA_PATH = '../../data/equity_data/'
 
 N_BUCKETS = 150
-N_ALLOC_BUCKETS = 25
 
 def loadfile(filename, has_id=True):
     ids = []

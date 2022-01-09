@@ -92,7 +92,6 @@ struct Bot {
             GameInfoPtr gameState, RoundStatePtr roundState, int active) {
         auto _timer_start = high_resolution_clock::now();
         Action proposed_action;
-        double proposed_action_prob = 0;
 
         auto legal_actions = roundState->legalActions();
 
@@ -156,10 +155,8 @@ struct Bot {
         int pip = roundState->pips[active];
         int villain_pip = roundState->pips[1-active];
         int pot = pokerbots::skeleton::STARTING_STACK*2
-                    - roundState->stacks[0]
-                    - roundState->stacks[1]
-                    - pip
-                    - villain_pip;
+                    - roundState->stacks[0] - roundState->stacks[1]
+                    - pip - villain_pip;
 
         if (VERBOSE) {
             cout << "Pot = " << pot << "; engine pip = " << pip << ", " << villain_pip << endl;
@@ -217,11 +214,9 @@ struct Bot {
                                     history);
         CFRInfoset& infoset = fetch_infoset(infosets, key, available_actions.size());
 
-        if (infoset.t == 0) {
-            if (VERBOSE) cout << "WARNING: No information for this state." << endl;
-        }
-
         if (VERBOSE) {
+            cout << "Infostate key: " << key << endl;
+            if (infoset.t == 0) cout << "WARNING: No information for this state." << endl;
             cout << "Available actions: ";
             print_actions(cout, available_actions) << endl;
             cout << "Strategy: " << infoset.cumu_strategy << endl;
@@ -231,14 +226,9 @@ struct Bot {
         // get proposed action
         int action_index = infoset.get_action_index_avg();
         int action = available_actions[action_index];
-        // get probability of this action
-        double actions_norm = accumulate(infoset.cumu_strategy.begin(), infoset.cumu_strategy.end(), 0.0);
-        if (actions_norm > 0.0) { // do (1 - prob.) since we sort ascending later
-            proposed_action_prob = 1 - infoset.cumu_strategy[action_index];
-        }
-        else {
-            proposed_action_prob = 1 - 1. / available_actions.size();
-        }
+
+        // update history with action
+        history.update(action);
 
         // convert the proposed action to an action for the engine
         // don't update bet histories in case we re-assign
@@ -248,27 +238,15 @@ struct Bot {
             action, pip, villain_pip, pot, stack, villain_stack);
         proposed_internal_action = action;
 
-
-        // track proposed chips we want to put in
-        continue_cost = villain_pip - pip;
-        if (proposed_action.actionType == Action::RAISE) {
-            proposed_pip = proposed_action.amount - pip;
-        }
-        else if (proposed_action.actionType == Action::CALL) {
-            proposed_pip = continue_cost;
-        }
-
-        Action my_action = proposed_action;
-
         if (VERBOSE) {
-            cout << "Board: " << my_action << endl;
+            cout << "Board: " << proposed_action << endl;
             cout << endl;
         }
 
         auto _timer_end = high_resolution_clock::now();
         _bot_time += duration_cast<microseconds>(_timer_end - _timer_start).count() / 1000000.0;
         
-        return  my_action;
+        return  proposed_action;
     }
 
 };
