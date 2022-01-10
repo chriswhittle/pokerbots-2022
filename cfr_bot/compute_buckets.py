@@ -6,10 +6,11 @@ DATA_PATH = '../../data/equity_data/'
 
 N_BUCKETS = 150
 
-def loadfile(filename, has_id=True):
+def loadfile(filename, has_id=True, max_samples=None):
     ids = []
     points = []
     with open(filename) as file:
+        i = 0
         for line in tqdm(file):
             l = line.replace('\n', '').split(' ')
             if len(l) > 0:
@@ -18,6 +19,10 @@ def loadfile(filename, has_id=True):
                     ids += [int(l[0])]
                 else:
                     points += [[float(x) for x in l]]
+
+            i += 1
+            if max_samples is not None and i > max_samples:
+                break
     
     if has_id:
         return ids, points
@@ -38,8 +43,8 @@ if __name__ == "__main__":
     # standard equity bucketing against N ranges
     streets_to_bucket = [
         ('', 'flop', True, N_BUCKETS),
-         ('', 'turn', False, N_BUCKETS),
-         ('', 'river', False, N_BUCKETS),
+        ('', 'turn', False, N_BUCKETS),
+        ('', 'river', False, N_BUCKETS),
     ]
 
     for prefix, street, has_id, n in streets_to_bucket:
