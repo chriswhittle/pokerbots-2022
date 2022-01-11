@@ -173,41 +173,55 @@ inline int get_cards_info_state_flop(array<int, HAND_SIZE> c, array<int, FLOP_SI
     return data.flop_buckets.at(key);
 }
 
-// get infostate for all streets
+// get infostate for all streets, with different hole cards each street
 inline array<int, NUM_STREETS> get_cards_info_state(
-    array<int, HAND_SIZE> c, array<int, BOARD_SIZE> board,
+    array<array<int, HAND_SIZE>, NUM_STREETS> c, array<int, BOARD_SIZE> board,
     const DataContainer &data, int iterations = 1000) {
     array<int, NUM_STREETS> info_states;
 
     //// pre-flop
-    info_states[0] = get_cards_info_state_preflop(c);
+    info_states[0] = get_cards_info_state_preflop(c[0]);
 
     //// flop
     array<int, FLOP_SIZE> flop;
     copy(board.begin(), board.begin()+FLOP_SIZE, flop.begin());
-    info_states[1] = get_cards_info_state_flop(c, flop, data);
+    info_states[1] = get_cards_info_state_flop(c[1], flop, data);
 
     //// turn
-    ULL hand_mask = indices_to_mask(c);
+    ULL hand_mask_turn = indices_to_mask(c[2]);
     array<int, TURN_SIZE> turn_board;
     copy(board.begin(), board.begin() + TURN_SIZE, turn_board.begin());
     ULL turn_mask = indices_to_mask(turn_board);
 
     info_states[2] = get_bucket_from_clusters(
-        hand_mask, turn_mask, TURN_SIZE, data.turn_clusters, iterations);
+        hand_mask_turn, turn_mask, TURN_SIZE, data.turn_clusters, iterations);
 
     //// river
+    ULL hand_mask_river = indices_to_mask(c[3]);
     ULL board_mask = indices_to_mask(board);
 
     info_states[3] = get_bucket_from_clusters(
-        hand_mask, board_mask, board.size(), data.river_clusters, 0);
+        hand_mask_river, board_mask, board.size(), data.river_clusters, 0);
 
     return info_states;
 }
 
+// get infostate for all streets
+inline array<int, NUM_STREETS> get_cards_info_state(
+    array<int, HAND_SIZE> c, array<int, BOARD_SIZE> board,
+    const DataContainer &data, int iterations = 1000) {
+
+    array<array<int, HAND_SIZE>, NUM_STREETS> c_full;
+    for (int i = 0; i < NUM_STREETS; i++) {
+        c_full[i] = c;
+    }
+    return get_cards_info_state(c_full, board, data, iterations);
+
+}
+
 const int SHIFT_PLAYER_IND = 1; // 1 bit for player position
 const int SHIFT_STREET = 2; // 2 bits for street
-const int SHIFT_CARD_INFO = 8; // 8 bits for card info
+const int SHIFT_CARD_INFO = 16; // 16 bits for card info
 const int SHIFT_ACTIONS = 3; // 3 bits per action
 ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &history);
 

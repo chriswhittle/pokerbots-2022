@@ -9,6 +9,9 @@
 
 using namespace std;
 
+// swap probabilities on flop/turn/river for swap hold 'em
+const array<float, 3> SWAP_ODDS = {0.1, 0.05, 0};
+
 // define actions for bet history
 const int FOLD = 1;
 const int CHECK_CALL = 2;
@@ -96,5 +99,11 @@ inline ostream& operator<<(ostream& os, BoardActionHistory& p) {
 void deal_game(
     array<int, BOARD_SIZE> &board,
     array<int, HAND_SIZE> &c1, array<int, HAND_SIZE> &c2);
+
+void deal_game_swaps(
+    array<int, BOARD_SIZE> &board,
+    array<array<int, HAND_SIZE>, NUM_STREETS> &c1,
+    array<array<int, HAND_SIZE>, NUM_STREETS> &c2,
+    array<float, NUM_STREETS-1> swap_odds);
 
 #endif

@@ -156,6 +156,71 @@ void check_card_dist() {
     cout << "card dist deviations: " << hist << endl;
 }
 
+// checks specific to swap hold 'em
+
+void test_deal_swaps() {
+
+    array<int, BOARD_SIZE> board;
+    array<array<int, HAND_SIZE>, NUM_STREETS> c1;
+    array<array<int, HAND_SIZE>, NUM_STREETS> c2;
+    ULL card;
+
+    const int n_samples = 100000;
+
+    array<int, NUM_STREETS-1> swap_count;
+    for (int i = 0; i < NUM_STREETS-1; i++) swap_count[i] = 0;
+
+    for (int i = 0; i < n_samples; i++) {
+        deal_game_swaps(board, c1, c2, SWAP_ODDS);
+
+        // check board collisions
+        ULL dealt = 0;
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            card = CARD_MASKS_TABLE[board[j]];
+            assert((card & dealt) == 0);
+            dealt |= card;
+        }
+
+        // check player 1 collisions
+        for (int j = 0; j < NUM_STREETS; j++) {
+            for (int k = 0; k < HAND_SIZE; k++) {
+                card = CARD_MASKS_TABLE[c1[j][k]];
+
+                if (c1[j][k] != c1[j-1][k]) {
+                    swap_count[j-1]++;
+                }
+
+                assert((card & dealt) == 0 || c1[j][k] == c1[j-1][k]);
+                dealt |= card;
+            }
+        }
+        
+        // check player 2 collisions
+        for (int j = 0; j < NUM_STREETS; j++) {
+            for (int k = 0; k < HAND_SIZE; k++) {
+                card = CARD_MASKS_TABLE[c2[j][k]];
+
+                if (c2[j][k] != c2[j-1][k]) {
+                    swap_count[j-1]++;
+                }
+
+                assert((card & dealt) == 0 || c2[j][k] == c2[j-1][k]);
+                dealt |= card;
+            }
+        }
+
+    }
+
+    cout << "\033[0;32m[PASSED test_deal_swaps]\033[0m" << endl;
+
+    // divide by 4 since 2 players each have 2 cards = 4 chances to swap
+    cout << "Swap fractions: ";
+    for (int i = 0; i < NUM_STREETS-1; i++)
+        cout << static_cast <float> (swap_count[i]) / n_samples / 4 << ", ";
+    cout << endl;
+
+}
+
 int main() {
     cout << "== Running all game tests ==" << endl;
 
@@ -169,5 +234,9 @@ int main() {
 
     // visual checks
     check_card_dist();
+
+    // swap hold 'em checks
+    test_deal_swaps();
+
     return 0;
 }

@@ -1,5 +1,9 @@
 #include "game.h"
 
+random_device GAME_RD;
+mt19937 GAME_GEN(GAME_RD());
+uniform_real_distribution<> GAME_RAND(0, 1);
+
 ostream& print_action(ostream& os, int action) {
     if (action == FOLD) {
         return os << "fold";
@@ -170,32 +174,18 @@ vector<int> BoardActionHistory::get_available_actions() const {
     return possible_actions;
 }
 
-// deal a board to the river and two hands
-void deal_game(
+// deal board to the river and two hands (as they are on each street, with a 
+// possibility to swap cards before each street)
+void deal_game_swaps(
     array<int, BOARD_SIZE> &board,
-    array<int, HAND_SIZE> &c1, array<int, HAND_SIZE> &c2) {
+    array<array<int, HAND_SIZE>, NUM_STREETS> &c1,
+    array<array<int, HAND_SIZE>, NUM_STREETS> &c2,
+    array<float, NUM_STREETS-1> swap_odds) {
     ULL dead = 0;
     int ind;
 
-    // deal hands
-    int i = 0;
-    while (i < 2*HAND_SIZE) {
-        ind = sample_card_dist();
-        if ((dead & CARD_MASKS_TABLE[ind]) == 0) {
-            if (i < HAND_SIZE) {
-                c1[i] = ind;
-            }
-            else {
-                c2[i - HAND_SIZE] = ind;
-            }
-
-            dead |= CARD_MASKS_TABLE[ind];
-            i++;
-        }
-    }
-
     // deal complete board
-    i = 0;
+    int i = 0;
     while (i < BOARD_SIZE) {
         ind = sample_card_dist();
         if ((dead & CARD_MASKS_TABLE[ind]) == 0) {
@@ -205,5 +195,59 @@ void deal_game(
         }
     }
 
+    // deal hands
+    for (int i = 0; i < NUM_STREETS; i++) {
+        // check dealing on each street
+        for (int j = 0; j < 2*HAND_SIZE; j++) {
+            // if pre-flop or if a swap rolls, deal a new card
+            if (i == 0 || GAME_RAND(GAME_GEN) < swap_odds[i-1]) {
+
+                // keep drawing until we get a new card
+                ind = sample_card_dist();
+                while ((CARD_MASKS_TABLE[ind] & dead) != 0) {
+                    ind = sample_card_dist();
+                }
+
+                // first two cards to player 1, last two to player 2
+                if (j < HAND_SIZE) {
+                    c1[i][j] = ind;
+                }
+                else {
+                    c2[i][j - HAND_SIZE] = ind;
+                }
+
+                dead |= CARD_MASKS_TABLE[ind];
+            }
+            // else use the same card from previous street
+            else {
+                if (j < HAND_SIZE) {
+                    c1[i][j] = c1[i-1][j];
+                }
+                else {
+                    c2[i][j - HAND_SIZE] = c2[i-1][j - HAND_SIZE];
+                }
+            }
+
+        }
+    }
+
     return;
+}
+
+// deal a board to the river and two hands
+void deal_game(
+    array<int, BOARD_SIZE> &board,
+    array<int, HAND_SIZE> &c1, array<int, HAND_SIZE> &c2) {
+    array<array<int, HAND_SIZE>, NUM_STREETS> c1_full;
+    array<array<int, HAND_SIZE>, NUM_STREETS> c2_full;
+
+    array<float, NUM_STREETS-1> swap_odds;
+    for (int i = 0; i < NUM_STREETS-1; i++) {
+        swap_odds[i] = 0;
+    }
+
+    deal_game_swaps(board, c1_full, c2_full, swap_odds);
+
+    c1 = c1_full[0];
+    c2 = c2_full[0];
 }

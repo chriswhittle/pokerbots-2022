@@ -81,9 +81,9 @@ void producer(int id) {
 
         // deal out board and cards
         array<int, BOARD_SIZE> board;
-        array<int, HAND_SIZE> c1;
-        array<int, HAND_SIZE> c2;
-        deal_game(board, c1, c2);
+        array<array<int, HAND_SIZE>, NUM_STREETS> c1;
+        array<array<int, HAND_SIZE>, NUM_STREETS> c2;
+        deal_game_swaps(board, c1, c2, SWAP_ODDS);
 
         // generate bitmasks for player hands and board
         ULL board_mask = indices_to_mask(board);
@@ -93,12 +93,13 @@ void producer(int id) {
         // hand_strengths[player_num]
         array<int, 2> hand_strengths;
         for (int p = 0; p < 2; p++) {
-            array<int, HAND_SIZE> c = (p == 0) ? c1 : c2;
+            array<array<int, HAND_SIZE>, NUM_STREETS> c = (p == 0) ? c1 : c2;
 
             my_round_deal.card_info_states[p] = get_cards_info_state(
                     c, board, data, N_EVAL_ITER);
 
-            ULL c_mask = indices_to_mask(c);
+            // just use river cards for showdown
+            ULL c_mask = indices_to_mask(c[NUM_STREETS-1]);
             assert((board_mask & c_mask) == 0);
             hand_strengths[p] = evaluate(c_mask | board_mask, 7);
         }
@@ -269,6 +270,8 @@ void run_mccfr() {
     // if infoset already exists, load in progress
     infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + ".txt";
     ifstream infosets_file(infosets_path);
+    
+    cout << "Loading " << infosets_path << endl;
     if (infosets_file.good()) {
         load_infosets_from_file(infosets_path, infosets);
     }
@@ -301,7 +304,7 @@ void run_mccfr() {
 
         if ((i+1) % N_CFR_CHECKPOINTS == 0) {
             cout << "Reached iter " << i+1 << ", checkpointing..." << endl;
-            string infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + "_checkpoint" + to_string(i+1) + ".txt";
+            string infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + "_ckpt" + to_string(i+1) + ".txt";
             save_infosets_to_file(infosets_path, infosets);
         }
     }
