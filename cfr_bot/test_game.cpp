@@ -1,7 +1,8 @@
 #include <cassert>
 
 #include "game.h"
-
+#include "gametree.h"
+#include <bitset>
 using namespace std;
 
 void test_immediate_fold() {
@@ -95,7 +96,7 @@ void test_bb_raise_fold() {
     assert(history.pot == ante + 10*BIG_BLIND);
     assert(history.pip[0] == 0);
     assert(history.pip[1] == 0);
-    history.update(BET); // 2/3 pot bet
+    history.update(BET+1); // 2/3 pot bet
     assert(history.ind == 0);
     assert(history.pip[0] == 0);
     assert(history.pip[1] == 8*BIG_BLIND);
@@ -154,6 +155,41 @@ void check_card_dist() {
         hist[c] += 1./n_samples;
     }
     cout << "card dist deviations: " << hist << endl;
+}
+
+void traverse_game_tree(GameTreeNode node, set<ULL> &keys, int &msb) {
+
+    assert(keys.find(node.history_key) == keys.end());
+    keys.insert(node.history_key);
+
+    // keep track of maximum number of bits used in infoset key
+    int cur_msb = 0;
+    ULL n = node.history_key;
+    while (n != 0) {
+        n /= 2;
+        cur_msb++;
+    }
+    if (cur_msb > msb) {
+        msb = cur_msb;
+    }
+
+    for (int i = 0; i < node.children.size(); i++) {
+        traverse_game_tree(node.children[i], keys, msb);
+    }
+
+}
+
+void test_unique_action_keys() {
+    
+    set<ULL> keys;
+    BoardActionHistory history(0, 0, 0);
+    GameTreeNode root = build_game_tree(history);
+    int msb = 0;
+
+    traverse_game_tree(root, keys, msb);
+    
+    cout << "\033[0;32m[PASSED test_unique_action_keys with "
+        << keys.size() << " keys (" << (msb) << " bits used at most)]\033[0m" << endl;
 }
 
 // checks specific to swap hold 'em
@@ -231,12 +267,15 @@ int main() {
     test_bb_raise_fold();
     test_allin_fold();
     test_allin_fold2();
+    test_unique_action_keys();
 
     // visual checks
     check_card_dist();
 
     // swap hold 'em checks
     test_deal_swaps();
+
+    cout << "\033[1;32m[PASSED ALL TESTS]\033[0m" << endl;
 
     return 0;
 }
