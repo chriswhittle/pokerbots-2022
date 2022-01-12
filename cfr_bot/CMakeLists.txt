@@ -38,6 +38,12 @@ if (${FULL_BUILD})
     target_include_directories(multi_mccfr_kuhn PRIVATE ../cpptqdm)
     
     add_executable(test_game test_game.cpp)
+    target_link_libraries(test_game PUBLIC ${Boost_SERIALIZATION_LIBRARY})
     target_link_libraries(test_game PRIVATE cfr_lib eval7pp)
     target_include_directories(test_game PRIVATE ../cpptqdm)
+    
+    add_executable(convert_infoset convert_infoset.cpp)
+    target_link_libraries(convert_infoset PUBLIC ${Boost_SERIALIZATION_LIBRARY})
+    target_link_libraries(convert_infoset PRIVATE cfr_lib eval7pp)
+    target_include_directories(convert_infoset PRIVATE ../cpptqdm)
 endif()
