@@ -22,6 +22,7 @@ using namespace std;
 #define N_THREADS 8
 
 const bool VERBOSE = false;
+const bool SAVE_BINARY = false;
 
 // MCCFR constants
 const int N_CFR_ITER = 2000000000;
@@ -31,8 +32,8 @@ const int N_EVAL_ITER = 100;
 const double EPS_GREEDY_EPSILON = 0.;
 
 // path strings
-string GAME = "cpp_poker";
-string TAG = "dev";
+string GAME = "v1";
+string TAG = "500post";
 
 string infosets_path_partial;
 string infosets_path;
@@ -261,7 +262,8 @@ void catch_interrupt(int signum) {
 
     done = true;
     save_infosets_to_file(infosets_path, infosets);
-    save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
+    if (SAVE_BINARY) 
+        save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
     exit(signum);
 }
 
@@ -314,7 +316,8 @@ void run_mccfr() {
             // full dataset for resuming training
             save_infosets_to_file(infosets_path, infosets);
             // partial dataset for the player
-            save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
+            if (SAVE_BINARY)
+                save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
         }
     }
     cout << "DEBUG: misses = " << multi_stats.queue_misses << endl;
@@ -326,7 +329,8 @@ void run_mccfr() {
 
     // save updated infoset
     save_infosets_to_file(infosets_path, infosets);
-    save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
+    if (SAVE_BINARY)
+        save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
 
     // tell producers to end
     done = true;
