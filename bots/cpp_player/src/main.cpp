@@ -41,13 +41,14 @@ struct Bot {
                  "data/turn_clusters.txt",
                  "data/river_clusters.txt") {
         _start = high_resolution_clock::now();
-        load_infosets_from_file("data/infosets.txt", infosets);
+        load_infosets_from_file_bin("data/infosets.bin", &infosets);
+        cout << "Loaded " << infosets.size() << endl;
     }
     
     void handleNewRound(
             GameInfoPtr gameState, RoundStatePtr roundState, int active) {
 
-        cout << "=====Round " << gameState->roundNum << "=====" << endl;
+        cout << "=====Round #" << gameState->roundNum << "=====" << endl;
 
         auto _timer_start = high_resolution_clock::now();
         history = BoardActionHistory(active, 0, 0);

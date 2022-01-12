@@ -34,15 +34,16 @@ const double EPS_GREEDY_EPSILON = 0.;
 string GAME = "cpp_poker";
 string TAG = "dev";
 
+string infosets_path_partial;
 string infosets_path;
 string DATA_PATH = "../../data/";
 
 // data structures
 InfosetDict infosets;
 DataContainer data(
-    DATA_PATH + "equity_data/flop_buckets_150.txt",
-    DATA_PATH + "equity_data/turn_clusters_150.txt",
-    DATA_PATH + "equity_data/river_clusters_150.txt");
+    DATA_PATH + "equity_data/flop_buckets_500.txt",
+    DATA_PATH + "equity_data/turn_clusters_500.txt",
+    DATA_PATH + "equity_data/river_clusters_500.txt");
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////// PRODUCER THREAD /////////////////////////////
@@ -260,6 +261,7 @@ void catch_interrupt(int signum) {
 
     done = true;
     save_infosets_to_file(infosets_path, infosets);
+    save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
     exit(signum);
 }
 
@@ -268,7 +270,8 @@ void run_mccfr() {
     MultiStats multi_stats;
 
     // if infoset already exists, load in progress
-    infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + ".txt";
+    infosets_path_partial = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG;
+    infosets_path = infosets_path_partial + ".txt";
     ifstream infosets_file(infosets_path);
     
     cout << "Loading " << infosets_path << endl;
@@ -304,8 +307,14 @@ void run_mccfr() {
 
         if ((i+1) % N_CFR_CHECKPOINTS == 0) {
             cout << "Reached iter " << i+1 << ", checkpointing..." << endl;
-            string infosets_path = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + "_ckpt" + to_string(i+1) + ".txt";
+
+            string infosets_path_partial = DATA_PATH + "cfr_data/" + GAME + "_infosets_" + TAG + "_ckpt" + to_string(i+1);
+            string infosets_path = infosets_path_partial + ".txt";
+
+            // full dataset for resuming training
             save_infosets_to_file(infosets_path, infosets);
+            // partial dataset for the player
+            save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
         }
     }
     cout << "DEBUG: misses = " << multi_stats.queue_misses << endl;
@@ -317,6 +326,7 @@ void run_mccfr() {
 
     // save updated infoset
     save_infosets_to_file(infosets_path, infosets);
+    save_infosets_to_file_bin(infosets_path_partial + ".bin", infosets);
 
     // tell producers to end
     done = true;

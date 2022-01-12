@@ -9,6 +9,11 @@
 #include <random>
 #include <cassert>
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/unordered_map.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include "define.h"
 #include "game.h"
 #include "compute_equity.h"
@@ -112,6 +117,37 @@ inline void load_infosets_from_file(string filename, InfosetDict &infosets) {
         infile >> infosets;
     }
 
+}
+
+namespace boost {
+    namespace serialization {
+
+        template<class Archive>
+        void serialize(Archive & ar, CFRInfoset & infoset,
+                        unsigned int version) {
+            
+            ar & infoset.t;
+            ar & infoset.cumu_strategy;
+
+        }
+
+    }
+}
+
+inline void save_infosets_to_file_bin(string filename, InfosetDict& infoset_dict) {
+    ofstream filestream(filename);
+    boost::archive::binary_oarchive archive(filestream,
+                                            boost::archive::no_codecvt);
+
+    archive << infoset_dict;
+}
+
+inline void load_infosets_from_file_bin(string filename, InfosetDict* infoset_dict) {
+    ifstream filestream(filename);
+    boost::archive::binary_iarchive archive(filestream,
+                                            boost::archive::no_codecvt);
+
+    archive >> *infoset_dict;
 }
 
 template<size_t N>

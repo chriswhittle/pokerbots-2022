@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NBUCKETS=150
+NBUCKETS=500
 
 set -x
 
@@ -32,7 +32,7 @@ mkdir data
 DATA_DIR="../../../data"
 if [ -d $DATA_DIR ]; then
     # change infosets here
-    cp -R $DATA_DIR/cfr_data/cpp_poker_infosets_dev.txt data/infosets.txt
+    cp -R $DATA_DIR/cfr_data/infosets.bin data/infosets.bin
 
     cp -R $DATA_DIR/equity_data/flop_buckets_$NBUCKETS.txt data/flop_buckets.txt
     cp -R $DATA_DIR/equity_data/turn_clusters_$NBUCKETS.txt data/turn_clusters.txt
