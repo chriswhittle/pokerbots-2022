@@ -128,6 +128,7 @@ int get_bucket_from_clusters(
 }
 
 ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &history) {
+    int action_bits;
     ULL key = 0;
 
     int shift = 0;
@@ -150,7 +151,17 @@ ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &h
 
     for (int i = 0; i < history.actions.size(); i++) {
         assert(history.actions[i] > 0);
-        ULL act_bits = (((ULL) history.actions[i]) << shift);
+
+        action_bits = history.actions[i];
+        // change the action ID to fit within 3 bits
+        // so our first bet size will have the same action id as our first raise
+        // but context will still produce unique keys
+        // (unique IDs between bets and raises are still used in code logic)
+        if (action_bits >= RAISE) {
+            action_bits -= BET_SIZES.size();
+        }
+
+        ULL act_bits = (((ULL) action_bits) << shift);
         assert((key & act_bits) == 0);
         key |= act_bits;
         shift += SHIFT_ACTIONS;
