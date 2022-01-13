@@ -259,9 +259,13 @@ Action map_infoset_action_to_action(int action, int pip,
     }
     else if (action >= BET && action < RAISE) {
         cout << "Action mapping: bet " << BET_SIZES[action-BET] << " * pot -> ";
+
+        // don't bet less than a min-bet
+        int raise = max({(int) round(pip + (pot + villain_pip*2) * BET_SIZES[action-BET]),
+                        BIG_BLIND, 2*villain_pip - pip});
         
-        int raise = min((int) round(pip + (pot + villain_pip*2) * BET_SIZES[action-BET]),
-                        min(stack+pip, villain_stack+villain_pip));
+        // ensure we don't raise above all-in
+        raise = min(raise, min(stack+pip, villain_stack+villain_pip));
 
         if (villain_pip > 0 && (villain_stack == 0 || stack <= villain_pip)) {
             cout << "call" << endl;
@@ -279,9 +283,13 @@ Action map_infoset_action_to_action(int action, int pip,
     }
     else if (action >= RAISE) {
         cout << "Action mapping: raise " << RAISE_SIZES[action-RAISE] << " * pot -> ";
+
+        // don't raise less than a min-raise
+        int raise = max({(int) round(villain_pip + (pot + villain_pip*2) * RAISE_SIZES[action-RAISE]),
+                        BIG_BLIND, 2*villain_pip - pip});
         
-        int raise = min((int) round(villain_pip + (pot + villain_pip*2) * RAISE_SIZES[action-RAISE]),
-                                min(stack+pip, villain_stack+villain_pip));
+        // ensure we don't raise above all-in
+        raise = min(raise, min(stack+pip, villain_stack+villain_pip));
 
         if (villain_stack == 0 || stack <= villain_pip) {
             cout << "call" << endl;
