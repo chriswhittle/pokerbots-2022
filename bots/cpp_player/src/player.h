@@ -62,21 +62,23 @@ bool rounding_analysis(float lower_bound, float upper_bound, float value_to_map)
 // (above call) and engine pot size (including call value)
 int map_bet_to_infoset_bet(int bet, int pot, const BoardActionHistory& history) {
     bool is_bet = (history.pip[1-history.ind] == 0); // according to internal game state
-    int ACT_TYPE = is_bet ? BET : RAISE;
-    auto& ACT_SIZES = is_bet ? BET_SIZES : RAISE_SIZES;
+    int act_type = is_bet ? BET : RAISE;
+    auto& act_sizes = is_bet ? BET_SIZES : RAISE_SIZES;
 
     vector<int> available_actions = history.get_available_actions();
     vector<float> bet_sizes = {0.0};
     vector<int> bet_actions = {CHECK_CALL};
+    
+    // get pot size from internal history
+    int cfr_pot = history.pot + 2*history.pip[1-history.ind];
     for (int act : available_actions) {
-        if (act >= ACT_TYPE && act < ACT_TYPE + ACT_SIZES.size()) {
-            float bet_size = ACT_SIZES[act-ACT_TYPE];
-            if (act-ACT_TYPE == ACT_SIZES.size()-1) { // all-in
-                /// TODO: this needs to be carefully checked
-                int cfr_pot = history.pot + 2*history.pip[1-history.ind]; // pot after call
-                int cfr_bet = history.stack[history.ind] + history.pip[history.ind] - history.pip[1-history.ind];
-                bet_size = cfr_bet / (float)cfr_pot;
-            }
+        if (act >= act_type && act < act_type + act_sizes.size()) {
+            // get internal bet sizing;
+            // subtract off our pip since we only care about the raise part
+            // (i.e. pip beyond a call) relative to the pot
+            int cfr_bet = history.bet_action_to_pip(act) - history.pip[1-history.ind];
+            float bet_size = (float) cfr_bet / cfr_pot;
+
             bet_sizes.push_back(bet_size);
             bet_actions.push_back(act);
         }
