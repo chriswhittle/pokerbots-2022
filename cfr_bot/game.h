@@ -37,7 +37,7 @@ const int NUM_RANKS = 13;
 const int NUM_SUITS = 4;
 
 // action history for a single board
-const int ACTION_BIT_SHIFT = 3;
+const int SHIFT_ACTIONS = 3; // 3 bits per action
 
 ostream& print_action(ostream& os, int action);
 inline ostream& print_actions(ostream& os, const vector<int>& acts) {
