@@ -32,7 +32,7 @@ const int N_EVAL_ITER = 100;
 const double EPS_GREEDY_EPSILON = 0.;
 
 // path strings
-string GAME = "v1";
+string GAME = "v2";
 string TAG = "500post";
 
 string infosets_path_partial;

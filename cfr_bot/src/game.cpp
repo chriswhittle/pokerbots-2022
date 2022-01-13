@@ -148,7 +148,7 @@ void BoardActionHistory::update(int new_action) {
 
     //// keep record of integer key for infoset dictionary
     action_key |= ((ULL) new_action << key_shift);
-    key_shift += ACTION_BIT_SHIFT;
+    key_shift += SHIFT_ACTIONS;
 
 }
 
