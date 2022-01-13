@@ -44,7 +44,7 @@ int BoardActionHistory::bet_action_to_pip(int action) const {
     if (action < RAISE) {
         sizes = BET_SIZES;
         action_offset = BET;
-        min_bet = BIG_BLIND;
+        min_bet = BIG_BLIND_;
     }
     // action is a raise
     else {

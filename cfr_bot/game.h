@@ -30,8 +30,8 @@ const int TURN_SIZE = 4;
 const int BOARD_SIZE = 5;
 const int NUM_STREETS = 4;
 
-const int BIG_BLIND = 2;
-const int STARTING_STACK = 100*BIG_BLIND;
+const int BIG_BLIND_ = 2;
+const int STARTING_STACK = 100*BIG_BLIND_;
 
 const int NUM_RANKS = 13;
 const int NUM_SUITS = 4;
@@ -75,8 +75,8 @@ struct BoardActionHistory {
     //// NOTE: `init_winner` specifies who _would_ win if we reach showdown
     BoardActionHistory(int init_button, int init_winner, int ante)
         : button(init_button), ind(init_button), winner(init_winner), pot(ante), ante(ante) {
-        pip[button] = BIG_BLIND/2;
-        pip[1-button] = BIG_BLIND;
+        pip[button] = BIG_BLIND_/2;
+        pip[1-button] = BIG_BLIND_;
     }
 
     void update(int new_action);
