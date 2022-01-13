@@ -2,6 +2,7 @@
 #define REAL_POKER_GAME
 
 #include <cassert>
+#include <math.h>
 
 #include "define.h"
 #include "eval7pp.h"
@@ -16,7 +17,7 @@ const array<float, 3> SWAP_ODDS = {0.1, 0.05, 0};
 const int FOLD = 1;
 const int CHECK_CALL = 2;
 
-// relative to pot size
+// relative to pot size; bet and raise size vectors should be sorted
 const int BET = 3;
 const vector<float> BET_SIZES = {0.33, 0.67, 1.75, 100}; // 4 bet sizes, 100 = all-in
 
@@ -79,6 +80,8 @@ struct BoardActionHistory {
     }
 
     void update(int new_action);
+
+    int bet_action_to_pip(int action) const;
 
     vector<int> get_available_actions() const;
 

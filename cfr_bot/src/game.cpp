@@ -34,6 +34,37 @@ ostream& print_action(ostream& os, int action) {
     }
 }
 
+int BoardActionHistory::bet_action_to_pip(int action) const {
+    assert(action >= BET && action < RAISE + RAISE_SIZES.size());
+
+    vector<float> sizes;
+    int action_offset;
+    int min_bet;
+    // action is a bet
+    if (action < RAISE) {
+        sizes = BET_SIZES;
+        action_offset = BET;
+        min_bet = BIG_BLIND;
+    }
+    // action is a raise
+    else {
+        sizes = RAISE_SIZES;
+        action_offset = RAISE;
+        min_bet = pip[1-ind] - pip[ind];
+    }
+
+    int shove = stack[ind]-pip[1-ind];
+    int bet_amount = min(shove, (int) round((pot + 2*pip[1-ind]) * sizes[action-action_offset]));
+
+    // round up to minimum bet (unless a shove)
+    // 1 BB for betting, previous bet for raise
+    if (bet_amount < min_bet && bet_amount != shove) {
+        bet_amount = min_bet;
+    }
+
+    return pip[1-ind] + bet_amount;
+
+}
 
 void BoardActionHistory::update(int new_action) {
     assert(in_vector(get_available_actions(), new_action));
@@ -73,19 +104,9 @@ void BoardActionHistory::update(int new_action) {
         stack[ind] -= pip[ind];
         stack[1-ind] += pot;
     }
-    // process bets
-    else if (new_action >= BET && new_action < RAISE) {
-        pip[ind] = min(stack[ind], (int) (pot * BET_SIZES[new_action-BET]));
-    }
-    // process raises
-    else if (new_action >= RAISE) {
-        int shove = stack[ind]-pip[1-ind];
-        int raise_amount = min(shove, (int) ((pot + 2*pip[1-ind]) * RAISE_SIZES[new_action-RAISE]));
-        // round up to min-raise (unless it's a shove)
-        if ((raise_amount < (pip[1-ind] - pip[ind])) && (raise_amount != shove)) {
-            raise_amount = pip[1-ind] - pip[ind];
-        }
-        pip[ind] = pip[1-ind] + raise_amount;
+    // process bets and raises
+    else if (new_action >= BET && new_action < RAISE + RAISE_SIZES.size()) {
+        pip[ind] = bet_action_to_pip(new_action);
     }
     else {
         throw runtime_error("Unknown action");
@@ -147,27 +168,44 @@ vector<int> BoardActionHistory::get_available_actions() const {
         return possible_actions;
     }
 
+    // set up bet/raise logic
+    vector<float> sizes;
+    int action_offset;
     // can also fold or raise if facing a bet
     if (pip[1-ind] > 0) {
         assert(pip[ind] <= pip[1-ind]);
+
         if (pip[ind] < pip[1-ind]) {
             possible_actions.push_back(FOLD);
         }
-        if (pip[1-ind] < stack[ind]) { // can raise if calling =/= all-in
-            for (int i = 0; i < RAISE_SIZES.size(); i++) {
-                possible_actions.push_back(RAISE+i);
-                // if our stack is smaller than the raise size,
-                // just list one raise action
-                if (((int) RAISE_SIZES[i]*(pot + 2*pip[1-ind])) + pip[ind] > stack[ind]) {
-                    break;
-                }
-            }
-        }
+
+        sizes = RAISE_SIZES;
+        action_offset = RAISE;
+
     }
     // can bet if not facing a bet
-    else if (pip[1-ind] < stack[ind]) {
-        for (int i = 0; i < BET_SIZES.size(); i++) {
-            possible_actions.push_back(BET+i);
+    else {
+        sizes = BET_SIZES;
+        action_offset = BET;
+    }
+
+    // put bets/raises onto available action vector
+    // can only bet/raise if calling =/= all-in
+    int current_pip;
+    int previous_pip = -1;
+    if (pip[1-ind] < stack[ind]) {
+        for (int i = 0; i < sizes.size(); i++) {
+            current_pip = bet_action_to_pip(action_offset + i);
+
+            // only add action if the pip amount differs from the 
+            // previous pip amount (relies on bet sizes being sorted).
+            // Avoids listing multiple actions that are all just shoves
+            // as well as small bets that round to the same value
+            if (current_pip != previous_pip) {
+                possible_actions.push_back(action_offset + i);
+            }
+
+            previous_pip = current_pip;
         }
     }
 

@@ -260,7 +260,8 @@ Action map_infoset_action_to_action(int action, int pip,
     else if (action >= BET && action < RAISE) {
         cout << "Action mapping: bet " << BET_SIZES[action-BET] << " * pot -> ";
         
-        int raise = min((int) (pip + (pot + villain_pip*2) * BET_SIZES[action-BET]), min(stack+pip, villain_stack+villain_pip));
+        int raise = min((int) round(pip + (pot + villain_pip*2) * BET_SIZES[action-BET]),
+                        min(stack+pip, villain_stack+villain_pip));
 
         if (villain_pip > 0 && (villain_stack == 0 || stack <= villain_pip)) {
             cout << "call" << endl;
@@ -279,7 +280,7 @@ Action map_infoset_action_to_action(int action, int pip,
     else if (action >= RAISE) {
         cout << "Action mapping: raise " << RAISE_SIZES[action-RAISE] << " * pot -> ";
         
-        int raise = min((int) (villain_pip + (pot + villain_pip*2) * RAISE_SIZES[action-RAISE]),
+        int raise = min((int) round(villain_pip + (pot + villain_pip*2) * RAISE_SIZES[action-RAISE]),
                                 min(stack+pip, villain_stack+villain_pip));
 
         if (villain_stack == 0 || stack <= villain_pip) {
