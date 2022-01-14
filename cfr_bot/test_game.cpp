@@ -1,6 +1,6 @@
 #include <cassert>
 
-#include "game.h"
+#include "cfr.h"
 #include "gametree.h"
 #include <bitset>
 using namespace std;
@@ -192,6 +192,43 @@ void test_unique_action_keys() {
         << keys.size() << " keys (" << (msb) << " bits used at most)]\033[0m" << endl;
 }
 
+void history_traversal(BoardActionHistory history, set<ULL> &keys) {
+
+    ULL key = info_to_key(history.ind ^ history.button, history.street, 0, history);
+    assert(keys.find(key) == keys.end());
+    keys.insert(key);
+
+    bool is_facing_bet = key_is_facing_bet(key);
+    vector<int> available_actions = history.get_available_actions();
+    assert(
+        (is_facing_bet &&
+            find(available_actions.begin(), available_actions.end(), FOLD) 
+            != available_actions.end())
+        || (!is_facing_bet &&
+            find(available_actions.begin(), available_actions.end(), FOLD) 
+            == available_actions.end())
+    );
+
+    for (int i = 0; i < available_actions.size(); i++) {
+        BoardActionHistory new_history = history;
+        new_history.update(available_actions[i]);
+        history_traversal(new_history, keys);
+    }
+
+}
+
+void test_history_traversal() {
+
+    set<ULL> keys;
+    BoardActionHistory history(0, 0, 0);
+
+    history_traversal(history, keys);
+    
+    cout << "\033[0;32m[PASSED test_history_traversal with " << keys.size()
+        << " keys]\033[0m" << endl;
+
+}
+
 // checks specific to swap hold 'em
 
 void test_deal_swaps() {
@@ -268,6 +305,7 @@ int main() {
     test_allin_fold();
     test_allin_fold2();
     test_unique_action_keys();
+    test_history_traversal();
 
     // visual checks
     check_card_dist();

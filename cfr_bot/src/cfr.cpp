@@ -4,6 +4,20 @@ random_device CFR_RD;
 mt19937 CFR_GEN(CFR_RD());
 uniform_real_distribution<> CFR_RAND(0, 1);
 
+//////////////////////////////////////////
+/////////// pure CFR infoset /////////////
+//////////////////////////////////////////
+
+CFRInfosetPure::CFRInfosetPure(int init_action) : action(init_action) {}
+
+int CFRInfosetPure::get_action_index_avg() {
+    return action;
+}
+
+//////////////////////////////////////////
+///// full CFR infoset for training //////
+//////////////////////////////////////////
+
 CFRInfoset::CFRInfoset() {}
 
 CFRInfoset::CFRInfoset(int num_actions)
@@ -180,4 +194,24 @@ ULL info_to_key(ULL history_key, int card_info) {
     key |= card_bits;
     
     return key;
+}
+
+// used to see if the player is facing a bet based on the infoset key
+// without having to reproduce the full game tree
+// (used to decide whether folding is a valid action)
+bool key_is_facing_bet(ULL full_key) {
+    ULL key = full_key >> (SHIFT_PLAYER_IND + SHIFT_STREET + SHIFT_CARD_INFO);
+    int last_action;
+
+    // if no actions have occurred, the player is in the SB and can fold
+    if (key == 0) {
+        return true;
+    }
+
+    while (key != 0) {
+        last_action = key & ((1 << SHIFT_ACTIONS) - 1);
+        key = key >> SHIFT_ACTIONS;
+    }
+
+    return last_action >= BET;
 }

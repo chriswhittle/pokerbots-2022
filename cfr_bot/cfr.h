@@ -25,7 +25,21 @@ extern random_device CFR_RD;
 extern mt19937 CFR_GEN;
 extern uniform_real_distribution<> CFR_RAND;
 
-struct CFRInfoset {
+// abstract CFR infoset to be used by the player
+struct CFRInfosetBase {
+    virtual int get_action_index_avg() = 0;
+};
+
+// purified CFR infoset (strategy is a pure action)
+struct CFRInfosetPure : CFRInfosetBase {
+    int action;
+
+    CFRInfosetPure(int init_action);
+    int get_action_index_avg();
+};
+
+// CFR infoset with full information (regrets, strategy) used in training
+struct CFRInfoset : CFRInfosetBase {
     ULL info = 0;
     vector<double> cumu_regrets;
     vector<double> cumu_strategy;
@@ -289,5 +303,6 @@ ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &h
 
 const int SHIFT_CARD_INFO_TOTAL = SHIFT_PLAYER_IND + SHIFT_STREET;
 ULL info_to_key(ULL history_key, int card_info);
+bool key_is_facing_bet(ULL full_key);
 
 #endif
