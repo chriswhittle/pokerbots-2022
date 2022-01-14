@@ -7,6 +7,7 @@
 #include <skeleton/states.h>
 
 #include "cfr.h"
+#include "binary.h"
 #include "eval7pp.h"
 
 using namespace pokerbots::skeleton;
@@ -227,8 +228,8 @@ struct Bot {
                                     history);
         auto& infoset = fetch_infoset(infosets, key, available_actions.size());
 
+        cout << "Infostate key: " << key << endl;
         if (VERBOSE) {
-            cout << "Infostate key: " << key << endl;
             #ifdef PLAYER_USE_PURE
             cout << "Pure strategy: ";
             print_action(cout, available_actions[infoset.action]);

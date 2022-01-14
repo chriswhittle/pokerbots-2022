@@ -1,5 +1,6 @@
 #include <chrono>
 #include "cfr.h"
+#include "binary.h"
 
 using namespace std;
 using namespace std::chrono;

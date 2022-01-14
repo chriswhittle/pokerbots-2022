@@ -15,6 +15,7 @@
 #include "gametree.h"
 #include "compute_equity.h"
 #include "define.h"
+#include "binary.h"
 
 using namespace std;
 
