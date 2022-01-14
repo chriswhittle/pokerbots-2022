@@ -32,8 +32,9 @@ struct CFRInfosetBase {
 
 // purified CFR infoset (strategy is a pure action)
 struct CFRInfosetPure : CFRInfosetBase {
-    int action;
+    int action = 0;
 
+    CFRInfosetPure();
     CFRInfosetPure(int init_action);
     int get_action_index_avg();
 };
@@ -57,6 +58,11 @@ struct CFRInfoset : CFRInfosetBase {
 
 };
 
+inline ostream& operator<<(ostream& os, CFRInfosetPure& p) {
+    os << "CFRInfosetPure(action=" << p.action << ")";
+    return os;
+}
+
 inline ostream& operator<<(ostream& os, CFRInfoset& p) {
     os << "CFRInfoset(t=" << p.t << ",";
     os << "avgstrat=" << p.get_avg_strategy() << ")";
@@ -64,6 +70,7 @@ inline ostream& operator<<(ostream& os, CFRInfoset& p) {
 }
 
 using InfosetDict = unordered_map<ULL, CFRInfoset>;
+using InfosetDictPure = unordered_map<ULL, CFRInfosetPure>;
 
 inline CFRInfoset& fetch_infoset(InfosetDict &infosets, ULL key, int num_actions) {
     if (infosets.find(key) == infosets.end()) {
@@ -134,6 +141,7 @@ inline void load_infosets_from_file(string filename, InfosetDict &infosets) {
 
 }
 
+// full CFR infoset serialization
 BOOST_SERIALIZATION_SPLIT_FREE(CFRInfoset);
 namespace boost {
     namespace serialization {
@@ -174,7 +182,26 @@ namespace boost {
     }
 }
 
-inline void save_infosets_to_file_bin(string filename, InfosetDict& infoset_dict) {
+// pure CFR infoset serialization
+BOOST_SERIALIZATION_SPLIT_FREE(CFRInfosetPure);
+namespace boost {
+    namespace serialization {
+        template<class Archive>
+        void save(Archive & ar, const CFRInfosetPure & infoset,
+                        const unsigned int version) {
+            ar & infoset.action;
+        }
+        template<class Archive>
+        void load(Archive & ar, CFRInfosetPure & infoset,
+                        const unsigned int version) {
+            ar & infoset.action;
+        }
+    }
+}
+
+// saving/loading full infosets to/from binary files
+template<class T>
+inline void save_infosets_to_file_bin(string filename, unordered_map<ULL, T>& infoset_dict) {
     ofstream filestream(filename);
     boost::archive::binary_oarchive archive(filestream,
                                             boost::archive::no_codecvt);
@@ -182,7 +209,8 @@ inline void save_infosets_to_file_bin(string filename, InfosetDict& infoset_dict
     archive << infoset_dict;
 }
 
-inline void load_infosets_from_file_bin(string filename, InfosetDict* infoset_dict) {
+template<class T>
+inline void load_infosets_from_file_bin(string filename, unordered_map<ULL, T>* infoset_dict) {
     ifstream filestream(filename);
     boost::archive::binary_iarchive archive(filestream,
                                             boost::archive::no_codecvt);
@@ -305,6 +333,6 @@ const int SHIFT_CARD_INFO_TOTAL = SHIFT_PLAYER_IND + SHIFT_STREET;
 ULL info_to_key(ULL history_key, int card_info);
 
 bool key_is_facing_bet(ULL full_key);
-CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key);
+CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key, double fold_threshold = 0.5);
 
 #endif

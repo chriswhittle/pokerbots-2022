@@ -12,6 +12,8 @@ uniform_real_distribution<> CFR_RAND(0, 1);
 /////////// pure CFR infoset /////////////
 //////////////////////////////////////////
 
+CFRInfosetPure::CFRInfosetPure() {}
+
 CFRInfosetPure::CFRInfosetPure(int init_action) : action(init_action) {}
 
 int CFRInfosetPure::get_action_index_avg() {
@@ -19,7 +21,7 @@ int CFRInfosetPure::get_action_index_avg() {
 }
 
 CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key,
-                                double fold_threshold = 0.5) {
+                                double fold_threshold) {
 
     bool is_facing_bet = key_is_facing_bet(key);
 
@@ -53,12 +55,17 @@ CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key,
     }
     meta_probabilities.push_back(bet_probability);
 
+    // get index of most probable meta-action
     int pure_action = distance(meta_probabilities.begin(),
             max_element(meta_probabilities.begin(), meta_probabilities.end())
         );
 
+    // if the chosen action is the last action (i.e. to bet), then return the
+    // index of the most probable bet action
+    // otherwise return the chosen action (check/call or fold)
     return CFRInfosetPure(
-        (pure_action == strategy.size()-1) ? max_bet_index : pure_action
+        (pure_action == meta_probabilities.size()-1 && max_bet_index != 0) 
+        ? max_bet_index : pure_action
     );
 
 }
