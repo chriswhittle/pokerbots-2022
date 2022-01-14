@@ -16,7 +16,7 @@ using namespace std::chrono;
 
 // the bot will expect an unordered_map<ULL, CFRInfosetPure> infoset
 // if the following is set (else unordered_map<ULL, CFRInfoset>)
-// #define PLAYER_USE_PURE
+#define PLAYER_USE_PURE
 
 const int N_MC_ITER = 10000;
 const bool VERBOSE = false;
