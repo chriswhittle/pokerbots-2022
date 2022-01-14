@@ -10,7 +10,7 @@ plt.rcParams.update({
 })
 
 INFOSET_PATH = Path('../../data/cfr_data')
-INFOSET_FILENAME = 'overbet_swap_infosets_16bit_500post_ckpt2000000000.txt'
+INFOSET_FILENAME = 'v1_infosets_500post.txt'
 
 print(f'Reading from {INFOSET_FILENAME}...')
 

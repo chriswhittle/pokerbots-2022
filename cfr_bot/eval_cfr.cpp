@@ -53,7 +53,7 @@ pair<double, double> run_out_game(InfosetDict &infosets1, InfosetDict &infosets2
     array<int, HAND_SIZE> c2;
     deal_game(board, c1, c2);
 
-    pair<int, int> stacks = {STARTING_STACK, STARTING_STACK};
+    pair<int, int> stacks = {STARTING_STACK_, STARTING_STACK_};
 
     array<int, NUM_STREETS> card_info_state1 = get_cards_info_state(
         c1, board, data1, N_EVAL_ITER);

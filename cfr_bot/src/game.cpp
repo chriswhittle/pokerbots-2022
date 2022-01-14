@@ -143,7 +143,7 @@ void BoardActionHistory::update(int new_action) {
 
     //// calculate amounts won when hand is finished
     if (finished) {
-        for (int i = 0; i < 2; i++) won[i] = stack[i] - STARTING_STACK - ante/2;
+        for (int i = 0; i < 2; i++) won[i] = stack[i] - STARTING_STACK_ - ante/2;
     }
 
     //// keep record of integer key for infoset dictionary

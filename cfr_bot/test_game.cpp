@@ -114,7 +114,7 @@ void test_allin_fold() {
     history.update(RAISE+1); // all-in
     assert(history.street == 0);
     assert(history.ind == 1);
-    assert(history.pip[0] == STARTING_STACK);
+    assert(history.pip[0] == STARTING_STACK_);
     assert(history.pip[1] == BIG_BLIND_);
     assert(history.pot == ante);
     history.update(FOLD);
@@ -134,7 +134,7 @@ void test_allin_fold2() {
     assert(history.street == 0);
     assert(history.ind == 0);
     assert(history.pip[0] == BIG_BLIND_);
-    assert(history.pip[1] == STARTING_STACK);
+    assert(history.pip[1] == STARTING_STACK_);
     assert(history.pot == ante);
     history.update(FOLD);
 
