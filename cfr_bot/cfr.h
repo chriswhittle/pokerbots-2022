@@ -32,7 +32,7 @@ struct CFRInfosetBase {
 
 // purified CFR infoset (strategy is a pure action)
 struct CFRInfosetPure : CFRInfosetBase {
-    int action = 0;
+    char action = 0;
 
     CFRInfosetPure();
     CFRInfosetPure(int init_action);
@@ -72,9 +72,22 @@ inline ostream& operator<<(ostream& os, CFRInfoset& p) {
 using InfosetDict = unordered_map<ULL, CFRInfoset>;
 using InfosetDictPure = unordered_map<ULL, CFRInfosetPure>;
 
-inline CFRInfoset& fetch_infoset(InfosetDict &infosets, ULL key, int num_actions) {
+inline CFRInfoset& fetch_infoset(InfosetDict &infosets,
+                                ULL key, int num_actions) {
     if (infosets.find(key) == infosets.end()) {
         CFRInfoset new_cfr_infoset(num_actions);
+        infosets.insert(make_pair(key, new_cfr_infoset));
+    }
+    return infosets[key];
+}
+
+inline CFRInfosetPure& fetch_infoset(InfosetDictPure &infosets,
+                                    ULL key, int num_actions) {
+    if (infosets.find(key) == infosets.end()) {
+        uniform_int_distribution<> d(0, num_actions-1);
+
+        // initialize purified state with a random action
+        CFRInfosetPure new_cfr_infoset(d(CFR_GEN));
         infosets.insert(make_pair(key, new_cfr_infoset));
     }
     return infosets[key];

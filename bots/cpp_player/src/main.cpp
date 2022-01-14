@@ -14,6 +14,10 @@ using namespace std::chrono;
 
 #include "player.h"
 
+// the bot will expect an unordered_map<ULL, CFRInfosetPure> infoset
+// if the following is set (else unordered_map<ULL, CFRInfoset>)
+// #define PLAYER_USE_PURE
+
 const int N_MC_ITER = 10000;
 const bool VERBOSE = false;
 
@@ -30,7 +34,11 @@ struct Bot {
     vector<int> board_cards;
 
     DataContainer data;
+    #ifdef PLAYER_USE_PURE
+    InfosetDictPure infosets;
+    #else
     InfosetDict infosets;
+    #endif
 
     BoardActionHistory history;
 
@@ -42,7 +50,11 @@ struct Bot {
                  "data/river_clusters.txt") {
         _start = high_resolution_clock::now();
         load_infosets_from_file_bin("data/infosets.bin", &infosets);
-        cout << "Loaded " << infosets.size() << endl;
+
+        cout << "Loaded " << infosets.size() << " in " << 
+        duration_cast<std::chrono::milliseconds>(
+                            high_resolution_clock::now() - _start
+                        ).count() << " ms" << endl;
     }
     
     void handleNewRound(
@@ -213,15 +225,22 @@ struct Bot {
                                     history.street,
                                     card_infostate,
                                     history);
-        CFRInfoset& infoset = fetch_infoset(infosets, key, available_actions.size());
+        auto& infoset = fetch_infoset(infosets, key, available_actions.size());
 
         if (VERBOSE) {
             cout << "Infostate key: " << key << endl;
+            #ifdef PLAYER_USE_PURE
+            cout << "Pure strategy: ";
+            print_action(cout, available_actions[infoset.action]);
+            cout << endl;
+            #else
             if (infoset.t == 0) cout << "WARNING: No information for this state." << endl;
             cout << "Available actions: ";
-            print_actions(cout, available_actions) << endl;
+            print_actions(cout, available_actions);
+            cout << endl;
             cout << "Strategy: " << infoset.cumu_strategy << endl;
             cout << "(visited " << infoset.t << " times)" << endl << endl;
+            #endif
         }
 
         // get proposed action
