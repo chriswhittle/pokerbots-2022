@@ -229,6 +229,54 @@ void test_history_traversal() {
 
 }
 
+void test_infoset_purification() {
+
+    BoardActionHistory history(0, 0, 0);
+    ULL key = info_to_key(history.ind ^ history.button, history.street, 0, history);
+
+    // player in SB
+    CFRInfoset infoset(history.get_available_actions().size());
+
+    // check/call, fold, bet
+    infoset.cumu_strategy = {0.5, 0.45, 0.05};
+    CFRInfosetPure infoset_pure = purify_infoset(infoset, key);
+    assert(infoset_pure.get_action_index_avg() == 0);
+
+    infoset.cumu_strategy = {0.4, 0.5, 0.1};
+    infoset_pure = purify_infoset(infoset, key);
+    assert(infoset_pure.get_action_index_avg() == 1);
+
+    infoset.cumu_strategy = {0.3, 0.3, 0.25, 0.15};
+    infoset_pure = purify_infoset(infoset, key);
+    assert(infoset_pure.get_action_index_avg() == 2);
+
+    infoset.cumu_strategy = {0.3, 0.3, 0.15, 0.25};
+    infoset_pure = purify_infoset(infoset, key);
+    assert(infoset_pure.get_action_index_avg() == 3);
+
+    history.update(CHECK_CALL);
+    key = info_to_key(history.ind ^ history.button, history.street, 0, history);
+
+    // player in BB, facing a call (no fold option)
+    infoset = CFRInfoset(history.get_available_actions().size());
+
+    // check/call, bet, bet
+    infoset.cumu_strategy = {0.51, 0.25, 0.24};
+    infoset_pure = purify_infoset(infoset, key);
+    assert(infoset_pure.get_action_index_avg() == 0);
+
+    infoset.cumu_strategy = {0.4, 0.31, 0.29};
+    infoset_pure = purify_infoset(infoset, key);
+    assert(infoset_pure.get_action_index_avg() == 1);
+
+    infoset.cumu_strategy = {0.4, 0.29, 0.31};
+    infoset_pure = purify_infoset(infoset, key);
+    assert(infoset_pure.get_action_index_avg() == 2);
+    
+    cout << "\033[0;32m[PASSED test_infoset_purification]\033[0m" << endl;
+
+}
+
 // checks specific to swap hold 'em
 
 void test_deal_swaps() {
@@ -306,6 +354,7 @@ int main() {
     test_allin_fold2();
     test_unique_action_keys();
     test_history_traversal();
+    test_infoset_purification();
 
     // visual checks
     check_card_dist();

@@ -303,6 +303,8 @@ ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &h
 
 const int SHIFT_CARD_INFO_TOTAL = SHIFT_PLAYER_IND + SHIFT_STREET;
 ULL info_to_key(ULL history_key, int card_info);
+
 bool key_is_facing_bet(ULL full_key);
+CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key);
 
 #endif

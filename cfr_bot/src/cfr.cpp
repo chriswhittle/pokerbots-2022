@@ -1,4 +1,8 @@
+#include <algorithm>
+
 #include "cfr.h"
+
+using namespace std;
 
 random_device CFR_RD;
 mt19937 CFR_GEN(CFR_RD());
@@ -12,6 +16,51 @@ CFRInfosetPure::CFRInfosetPure(int init_action) : action(init_action) {}
 
 int CFRInfosetPure::get_action_index_avg() {
     return action;
+}
+
+CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key,
+                                double fold_threshold = 0.5) {
+
+    bool is_facing_bet = key_is_facing_bet(key);
+
+    double bet_probability = 0;
+    vector<double> strategy = full_infoset.get_avg_strategy();
+
+    // if fold threshold is exceeded, just fold;
+    // if fold threshold = 0.5, behaviour is equivalent to continuing here.
+    // set fold threshold below 0.5 to bias the bot to a conservative playstyle
+    if (is_facing_bet && strategy[1] > fold_threshold) {
+        return CFRInfosetPure(1);
+    }
+
+    // sum up probabilities of aggressive actions
+    double max_bet_probability = 0;
+    int max_bet_index = 0;
+    for (int i = 1 + ((is_facing_bet) ? 1 : 0); i < strategy.size(); i++) {
+        bet_probability += strategy[i];
+
+        if (strategy[i] > max_bet_probability) {
+            max_bet_probability = strategy[i];
+            max_bet_index = i;
+        }
+    }
+
+    // build meta-probabilities of check/call, [fold], bet/raise
+    vector<double> meta_probabilities;
+    meta_probabilities.push_back(strategy[0]);
+    if (is_facing_bet) {
+        meta_probabilities.push_back(strategy[1]);
+    }
+    meta_probabilities.push_back(bet_probability);
+
+    int pure_action = distance(meta_probabilities.begin(),
+            max_element(meta_probabilities.begin(), meta_probabilities.end())
+        );
+
+    return CFRInfosetPure(
+        (pure_action == strategy.size()-1) ? max_bet_index : pure_action
+    );
+
 }
 
 //////////////////////////////////////////
