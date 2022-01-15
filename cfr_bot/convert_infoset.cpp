@@ -25,6 +25,21 @@ int main(int argc, char *argv[]) {
 
     cout << "Loaded " << infosets.size() << " in " << duration.count() << " ms." << endl;
 
+    // convert full CFR infoset to purified infoset
+    InfosetDictPure infosets_pure;
+    int pruned = 0;
+    for (pair<ULL, CFRInfoset> infoset : infosets) {
+        // only save infosets that actually have strategic information
+        if (infoset.second.t > 1) {
+            infosets_pure[infoset.first] = purify_infoset(infoset.second,
+                                                            infoset.first);
+        }
+        else {
+            pruned++;
+        }
+    }
+    cout << pruned << " empty infostates removed from purified infoset." << endl;
+
     // save infosets to binary
     start = high_resolution_clock::now();
     save_infosets_to_file_bin(save_path, infosets);
@@ -41,13 +56,6 @@ int main(int argc, char *argv[]) {
 
     cout << "Re-loaded " << infosets.size() << " from binary in " << duration.count() << " ms." << endl;
 
-    // convert full CFR infoset to purified infoset
-    InfosetDictPure infosets_pure;
-    for (pair<ULL, CFRInfoset> infoset : infosets) {
-        infosets_pure[infoset.first] = purify_infoset(infoset.second,
-                                                        infoset.first);
-    }
-
     // save purified infosets to binary
     start = high_resolution_clock::now();
     save_infosets_to_file_bin(save_path_pure, infosets_pure);
@@ -62,7 +70,7 @@ int main(int argc, char *argv[]) {
     stop = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(stop - start);
 
-    cout << "Re-loaded " << infosets.size() << " from binary in " << duration.count() << " ms (purified)." << endl;
+    cout << "Re-loaded " << infosets_pure.size() << " from binary in " << duration.count() << " ms (purified)." << endl;
 
     return 0;
 }

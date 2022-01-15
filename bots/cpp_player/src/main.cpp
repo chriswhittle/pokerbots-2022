@@ -46,10 +46,19 @@ struct Bot {
     time_point<high_resolution_clock> _start;
     double _bot_time = 0.0;
 
-    Bot() : data("data/flop_buckets.txt",
-                 "data/turn_clusters.txt",
-                 "data/river_clusters.txt") {
+    Bot() : data() {
         _start = high_resolution_clock::now();
+        // load equity data
+        // load flop buckets from binary
+        load_buckets_from_file_bin("data/flop_buckets.bin", &data.flop_buckets);
+        load_clusters_from_file("data/turn_clusters.txt", data.turn_clusters);
+        load_clusters_from_file("data/river_clusters.txt", data.river_clusters);
+        cout << "Loaded equity data in " <<
+                (duration_cast<std::chrono::milliseconds>(
+                    high_resolution_clock::now() - _start
+                ).count()) << " ms" << endl;
+
+        // load infosets
         load_infosets_from_file_bin("data/infosets.bin", &infosets);
 
         cout << "Loaded " << infosets.size() << " in " << 

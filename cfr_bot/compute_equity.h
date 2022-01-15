@@ -313,6 +313,7 @@ struct DataContainer {
     EquityClusters turn_clusters;
     EquityClusters river_clusters;
 
+    DataContainer() {}
     DataContainer(
         string flop_buckets_filename, string turn_clusters_filename,
         string river_clusters_filename) {

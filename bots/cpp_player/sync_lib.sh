@@ -34,7 +34,7 @@ if [ -d $DATA_DIR ]; then
     # change infosets here
     cp -R $DATA_DIR/cfr_data/infosets.bin.pure data/infosets.bin
 
-    cp -R $DATA_DIR/equity_data/flop_buckets_$NBUCKETS.txt data/flop_buckets.txt
+    cp -R $DATA_DIR/equity_data/flop_buckets_$NBUCKETS.bin data/flop_buckets.bin
     cp -R $DATA_DIR/equity_data/turn_clusters_$NBUCKETS.txt data/turn_clusters.txt
     cp -R $DATA_DIR/equity_data/river_clusters_$NBUCKETS.txt data/river_clusters.txt
     
