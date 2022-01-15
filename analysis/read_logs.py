@@ -40,6 +40,8 @@ def parse_logs(path):
     histories = []   
 
     round_num = 0
+    first_action = {'A': True, 'B': True}
+    only_folding = {'A': 0, 'B': 0}
     for line in lines:
         # start of round
         # Round #1, A (0), B (0)
@@ -47,18 +49,30 @@ def parse_logs(path):
             round_num += 1
 
             histories += ['']
+
+            first_action = {'A': True, 'B': True}
         elif 'awarded' in line:
             deltas[line[0]][round_num] = int(line.split(' ')[-1])
-
+        elif 'folds' in line and first_action[line[0]]:
+            if only_folding[line[0]] is None:
+                only_folding[line[0]] = round_num
+        elif ('bets' in line or 'calls' in line or 'raises' in line) and first_action[line[0]]:
+            only_folding[line[0]] = None
+            first_action[line[0]] = False
         if len(histories) > 0:
             histories[-1] += line + '\n'
+        
+    # get last round before check/folding began
+    max_round = round_num
+    if only_folding['A'] is not None or only_folding['B'] is not None:
+        max_round = min([only_folding[k] for k in only_folding if only_folding[k] is not None])
     
     # sort hand logs by amount won/lost
     histories = [s for _, s in sorted(zip(np.abs(deltas['A'][1:]), histories), reverse=True)]
 
-    return deltas, histories
+    return deltas, histories, max_round
 
-def plot_chips(deltas, filepath):
+def plot_chips(deltas, max_round, filepath):
     '''
     Plot chips gained over each hand.
     '''
@@ -66,9 +80,28 @@ def plot_chips(deltas, filepath):
     for l in ['A', 'B']:
         plt.plot(np.cumsum(deltas[l]), label=l)
 
+    plt.axvline(x=max_round, c='gray', ls='--')
+
     plt.legend(loc='best')
     plt.xlabel('No. of hands')
     plt.ylabel('Amount won [chips]')
+    plt.grid(which='both')
+    plt.tight_layout()
+    plt.savefig(filepath)
+
+def plot_delta_hist(deltas, max_round, filepath, bins=80):
+    '''
+    Plot histogram of pots won.
+    '''
+    plt.figure()
+    plt.title('Distribution of pots won')
+    for l in ['A', 'B']:
+        pots = deltas[l][:max_round]
+        plt.hist(pots[pots>0], bins=bins, alpha=0.5, label=l)
+
+    plt.legend(loc='best')
+    plt.xlabel('Pot size')
+    plt.ylabel('Number of pots')
     plt.grid(which='both')
     plt.tight_layout()
     plt.savefig(filepath)
@@ -85,7 +118,7 @@ if __name__ == "__main__":
     if not args.window:
         matplotlib.use('agg')
     plt.rcParams.update({
-        'figure.figsize': (14, 9),
+        'figure.figsize': (11, 7),
         'axes.xmargin': 0,
         'font.size': 16
     })
@@ -96,10 +129,11 @@ if __name__ == "__main__":
     out_prefix = args.out if args.out else f"output/{os.path.splitext(os.path.basename(args.logpath))[0]}"
 
     # parse logs
-    deltas, histories = parse_logs(args.logpath)
+    deltas, histories, max_round = parse_logs(args.logpath)
 
     # plot
-    plot_chips(deltas, f'{out_prefix}_chips.png')
+    plot_chips(deltas, max_round, f'{out_prefix}_chips.png')
+    plot_delta_hist(deltas, max_round, f'{out_prefix}_deltas.png')
 
     # save hand histories sorted by amount won/lost
     with open(f'{out_prefix}_sorted.txt', 'w') as file:
