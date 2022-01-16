@@ -263,6 +263,8 @@ const int SHIFT_CARD_INFO_TOTAL = SHIFT_PLAYER_IND + SHIFT_STREET;
 ULL info_to_key(ULL history_key, int card_info);
 
 bool key_is_facing_bet(ULL full_key);
-CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key, double fold_threshold = 0.5);
+CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key,
+                                double fold_threshold = 0.5,
+                                int visit_count_threshold = 100);
 
 #endif

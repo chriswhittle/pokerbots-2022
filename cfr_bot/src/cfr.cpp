@@ -21,7 +21,8 @@ int CFRInfosetPure::get_action_index_avg() {
 }
 
 CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key,
-                                double fold_threshold) {
+                                double fold_threshold,
+                                int visit_count_threshold) {
 
     bool is_facing_bet = key_is_facing_bet(key);
 
@@ -63,10 +64,20 @@ CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key,
     // if the chosen action is the last action (i.e. to bet), then return the
     // index of the most probable bet action
     // otherwise return the chosen action (check/call or fold)
-    return CFRInfosetPure(
-        (pure_action == meta_probabilities.size()-1 && max_bet_index != 0) 
-        ? max_bet_index : pure_action
-    );
+    int action = (pure_action == meta_probabilities.size()-1 
+                    && max_bet_index != 0) 
+        ? max_bet_index : pure_action;
+
+    // if we haven't visited this node much, our cumulative strategy won't
+    // have converged. As a heuristic, we should switch to a fold
+    // if the fold cumulative regret is lower than that of our chosen action
+    if (full_infoset.t < visit_count_threshold
+        && is_facing_bet
+        && full_infoset.cumu_regrets[1] > full_infoset.cumu_regrets[action]) {
+        action = 1;
+    }
+
+    return CFRInfosetPure(action);
 
 }
 
