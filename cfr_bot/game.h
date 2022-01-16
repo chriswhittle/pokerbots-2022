@@ -22,7 +22,7 @@ const int BET = 3;
 const vector<float> BET_SIZES = {0.33, 0.67, 1.75, 100}; // 4 bet sizes, 100 = all-in
 
 const int RAISE = 3 + BET_SIZES.size();
-const vector<float> RAISE_SIZES = {1, 100}; // 2 raise sizes, 100 = all-in
+const vector<float> RAISE_SIZES = {1, 3, 100}; // 3 raise sizes, 100 = all-in
 
 const int HAND_SIZE = 2;
 const int FLOP_SIZE = 3;
