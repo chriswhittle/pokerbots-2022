@@ -262,23 +262,3 @@ ULL info_to_key(ULL history_key, int card_info) {
     
     return key;
 }
-
-// used to see if the player is facing a bet based on the infoset key
-// without having to reproduce the full game tree
-// (used to decide whether folding is a valid action)
-bool key_is_facing_bet(ULL full_key) {
-    ULL key = full_key >> (SHIFT_PLAYER_IND + SHIFT_STREET + SHIFT_CARD_INFO);
-    int last_action;
-
-    // if no actions have occurred, the player is in the SB and can fold
-    if (key == 0) {
-        return true;
-    }
-
-    while (key != 0) {
-        last_action = key & ((1 << SHIFT_ACTIONS) - 1);
-        key = key >> SHIFT_ACTIONS;
-    }
-
-    return last_action >= BET;
-}

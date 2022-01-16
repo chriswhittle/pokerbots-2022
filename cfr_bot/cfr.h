@@ -19,6 +19,11 @@ extern random_device CFR_RD;
 extern mt19937 CFR_GEN;
 extern uniform_real_distribution<> CFR_RAND;
 
+const int SHIFT_PLAYER_IND = 1; // 1 bit for player position
+const int SHIFT_STREET = 2; // 2 bits for street
+const int SHIFT_CARD_INFO = 13; // 13 bits for card info
+// 3 bits per action defined in game.h
+
 // abstract CFR infoset to be used by the player
 struct CFRInfosetBase {
     virtual int get_action_index_avg() = 0;
@@ -63,6 +68,26 @@ inline ostream& operator<<(ostream& os, CFRInfoset& p) {
     return os;
 }
 
+// used to see if the player is facing a bet based on the infoset key
+// without having to reproduce the full game tree
+// (used to decide whether folding is a valid action)
+inline bool key_is_facing_bet(ULL full_key) {
+    ULL key = full_key >> (SHIFT_PLAYER_IND + SHIFT_STREET + SHIFT_CARD_INFO);
+    int last_action;
+
+    // if no actions have occurred, the player is in the SB and can fold
+    if (key == 0) {
+        return true;
+    }
+
+    while (key != 0) {
+        last_action = key & ((1 << SHIFT_ACTIONS) - 1);
+        key = key >> SHIFT_ACTIONS;
+    }
+
+    return last_action >= BET;
+}
+
 using InfosetDict = unordered_map<ULL, CFRInfoset>;
 using InfosetDictPure = unordered_map<ULL, CFRInfosetPure>;
 
@@ -78,10 +103,11 @@ inline CFRInfoset& fetch_infoset(InfosetDict &infosets,
 inline CFRInfosetPure& fetch_infoset(InfosetDictPure &infosets,
                                     ULL key, int num_actions) {
     if (infosets.find(key) == infosets.end()) {
-        uniform_int_distribution<> d(0, num_actions-1);
-
-        // initialize purified state with a random action
-        CFRInfosetPure new_cfr_infoset(d(CFR_GEN));
+        // if infoset hasn't been visited, we should prefer to fold or check
+        // if possible for variance reduction
+        CFRInfosetPure new_cfr_infoset(
+            (key_is_facing_bet(key) ? 1 : 0)
+        );
         infosets.insert(make_pair(key, new_cfr_infoset));
     }
     return infosets[key];
@@ -253,16 +279,11 @@ inline array<int, NUM_STREETS> get_cards_info_state(
 
 }
 
-const int SHIFT_PLAYER_IND = 1; // 1 bit for player position
-const int SHIFT_STREET = 2; // 2 bits for street
-const int SHIFT_CARD_INFO = 13; // 13 bits for card info
-// 3 bits per action defined in game.h
 ULL info_to_key(int player_ind, int street, int card_info, BoardActionHistory &history);
 
 const int SHIFT_CARD_INFO_TOTAL = SHIFT_PLAYER_IND + SHIFT_STREET;
 ULL info_to_key(ULL history_key, int card_info);
 
-bool key_is_facing_bet(ULL full_key);
 CFRInfosetPure purify_infoset(CFRInfoset full_infoset, ULL key,
                                 double fold_threshold = 0.5,
                                 int visit_count_threshold = 100);

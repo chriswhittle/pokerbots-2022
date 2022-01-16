@@ -149,7 +149,7 @@ struct Bot {
 
         // if we have enough of a lead check/fold to victory
         if (check_fold_win || 2*gameState->bankroll >
-                                ((NUM_ROUNDS - gameState->roundNum)*3 + 3)) {
+                                ((NUM_ROUNDS - gameState->roundNum)*3 + 4)) {
 
             check_fold_win = true;
             if (in_set(legal_actions, Action::CHECK)) {
@@ -235,6 +235,13 @@ struct Bot {
                                     history.street,
                                     card_infostate,
                                     history);
+
+        #ifdef PLAYER_USE_PURE
+            if (infosets.find(key) == infosets.end()) {
+                cout << "WARNING: No information for this state." << endl;
+            }
+        #endif
+
         auto& infoset = fetch_infoset(infosets, key, available_actions.size());
 
         cout << "Infostate key: " << key << endl;
