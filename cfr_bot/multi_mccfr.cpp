@@ -33,8 +33,8 @@ const int N_EVAL_ITER = 100;
 const double EPS_GREEDY_EPSILON = 0.;
 
 // path strings
-string GAME = "v2";
-string TAG = "500post";
+string GAME = "v3";
+string TAG = "150post";
 
 string infosets_path_partial;
 string infosets_path;
@@ -43,9 +43,9 @@ string DATA_PATH = "../../data/";
 // data structures
 InfosetDict infosets;
 DataContainer data(
-    DATA_PATH + "equity_data/flop_buckets_500.txt",
-    DATA_PATH + "equity_data/turn_clusters_500.txt",
-    DATA_PATH + "equity_data/river_clusters_500.txt");
+    DATA_PATH + "equity_data/flop_buckets_150.txt",
+    DATA_PATH + "equity_data/turn_clusters_150.txt",
+    DATA_PATH + "equity_data/river_clusters_150.txt");
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////// PRODUCER THREAD /////////////////////////////
