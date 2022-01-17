@@ -19,10 +19,10 @@ const int CHECK_CALL = 2;
 
 // relative to pot size; bet and raise size vectors should be sorted
 const int BET = 3;
-const vector<float> BET_SIZES = {0.33, 0.67, 1.75, 100}; // 4 bet sizes, 100 = all-in
+const vector<float> BET_SIZES = {0.33, 0.67, 1.5, 3, 100}; // 5 bet sizes, 100 = all-in
 
 const int RAISE = 3 + BET_SIZES.size();
-const vector<float> RAISE_SIZES = {1, 3, 100}; // 3 raise sizes, 100 = all-in
+const vector<float> RAISE_SIZES = {1, 3, 6, 10, 100}; // 5 raise sizes, 100 = all-in
 
 const int HAND_SIZE = 2;
 const int FLOP_SIZE = 3;
