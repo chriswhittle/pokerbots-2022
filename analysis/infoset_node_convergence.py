@@ -3,8 +3,10 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+from infoset_functions import *
+
 N_CKPT = 100000000
-N_CKPT_NUM = 8
+N_CKPT_NUM = 14
 
 # define keys of interest to look at
 keys = [
@@ -22,29 +24,9 @@ keys = [
 INFOSET_PATH = Path('../../data/cfr_data')
 ckpts = list(range(N_CKPT, (N_CKPT_NUM+1)*N_CKPT, N_CKPT))
 infoset_filenames = [
-    f'v2_infosets_500post_ckpt{n}.txt' 
+    f'v4_infosets_150post_ckpt{n}.txt' 
     for n in ckpts
 ]
-
-# bit shifts used for decoding infoset key
-PLAYER_SHIFT = 1
-STREET_SHIFT = 2
-CARD_SHIFT = 13
-ACTION_SHIFT = 3
-
-# given the infoset key, are we facing a bet?
-# used to determine if fold is valid action
-def is_facing_bet(key):
-    key = key >> (PLAYER_SHIFT+STREET_SHIFT+CARD_SHIFT)
-
-    if key == 0:
-        return True
-
-    while key != 0:
-        last_action = key % (2**ACTION_SHIFT)
-        key = key >> ACTION_SHIFT
-    
-    return last_action > 2
 
 keys_set = set(keys)
 probabilities = []
@@ -58,7 +40,7 @@ for f in infoset_filenames:
     print("Loading", INFOSET_PATH / f, "...")
     with open(INFOSET_PATH / f) as file:
         for line in file.readlines():
-            d = line.replace('\n', '').split(' ')
+            d = line.strip().split(' ')
             try:
                 cur_key = int(d[0])
                 if cur_key in keys_set:
@@ -87,7 +69,7 @@ for i, key in enumerate(keys):
     plt.subplot(int(ceil(len(keys)/N_COLS)), min(len(keys), N_COLS), i+1)
     plt.title(f'{key}')
     
-    if is_facing_bet(key):
+    if key_is_facing_bet(key):
         actions = ['call', 'fold']
         actions += [f'raise size #{j+1}' for j in range(num_actions-2)]
     else:
