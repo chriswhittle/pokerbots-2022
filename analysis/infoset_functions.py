@@ -1,5 +1,8 @@
 import numpy as np
 
+NUM_RANKS = 13
+RANKS = '23456789TJQKA'
+
 # bit shifts used for decoding infoset key
 PLAYER_SHIFT = 1
 STREET_SHIFT = 2
@@ -37,7 +40,7 @@ def purify_action(t, regrets, strategy, key, fold_threshold = 0.5,
     max_bet_probability = 0
     max_bet_index = 0
     for i  in range(1 + is_facing_bet, len(strategy)):
-        bet_probability = strategy[i]
+        bet_probability += strategy[i]
 
         if strategy[i] > max_bet_probability:
             max_bet_probability = strategy[i]

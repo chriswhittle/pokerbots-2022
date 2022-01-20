@@ -1,4 +1,3 @@
-from math import ceil
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -56,7 +55,7 @@ plt.rcParams.update({
 plt.figure()
 plt.plot(scaled_iters[1:], action_changes/1e3, '.--')
 plt.xlabel('CFR iterations/1M')
-plt.ylabel('Number of action changes between checkpoints in purified strategies')
+plt.ylabel('Number of action changes between checkpoints in purified strategies/1k')
 plt.ylim([0, None])
 plt.tight_layout()
 plt.savefig('output/total_convergence.png')
