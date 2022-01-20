@@ -26,14 +26,15 @@ const bool VERBOSE = false;
 const bool SAVE_BINARY = false;
 
 // MCCFR constants
-const int N_CFR_ITER = 2000000000;
+const unsigned long long N_CFR_INIT = 0;
+const unsigned long long N_CFR_ITER = 2000000000;
 const int N_CFR_CHECKPOINTS = 100000000;
 const int N_EVAL_ITER = 100;
 // const double EPS_GREEDY_EPSILON = 0.1;
 const double EPS_GREEDY_EPSILON = 0.;
 
 // path strings
-string GAME = "v3";
+string GAME = "v4";
 string TAG = "150post";
 
 string infosets_path_partial;
@@ -299,8 +300,8 @@ void run_mccfr() {
 
     // MCCFR loop
     tqdm pbar;
-    for (int i = 0; i < N_CFR_ITER; ++i) {
-        pbar.progress(i, N_CFR_ITER);
+    for (unsigned long long i = N_CFR_INIT; i < N_CFR_ITER; ++i) {
+        pbar.progress(i - N_CFR_INIT, N_CFR_ITER - N_CFR_INIT);
 
         int ind = i%2; // alternate position
         RoundDeals round_deal = consume_round_deal(thread_id, multi_stats);
