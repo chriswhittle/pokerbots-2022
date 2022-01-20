@@ -13,12 +13,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-import eval7
+import copy
 
 import matplotlib
 
-RANKS = {k:v for k,v in zip('23456789TJQKA',list(range(13)))}
-CARDS = {f'{r}{s}': eval7.Card(f'{r}{s}') for r in RANKS.keys() for s in 'schd'}
+STACK_SIZE = 200
 
 def parse_logs(path):
     '''
@@ -26,6 +25,9 @@ def parse_logs(path):
     '''
     with open(path) as file:
         content = file.read()
+
+    # get opponent name
+    opp = {'A': 'B', 'B': 'A'}
 
     # count hands
     lines = content.splitlines()
@@ -42,20 +44,33 @@ def parse_logs(path):
     round_num = 0
     first_action = {'A': True, 'B': True}
     only_folding = {'A': 0, 'B': 0}
+
+    street = ''
+    streets = ['Preflop', 'Flop', 'Turn', 'River']
+    won_by_street = {'A': {x: 0 for x in streets}, 'B': {x: 0 for x in streets}}
+    won_by_street_checkpoint = copy.deepcopy(won_by_street)
     for line in lines:
         # start of round
         # Round #1, A (0), B (0)
         if '#' in line:
             round_num += 1
 
-            histories += ['']
+            street = streets[0]
+
+            histories += ['']    
 
             first_action = {'A': True, 'B': True}
+        elif (any([x in line for x in streets[1:]])
+                    and line.split(' ')[-1] != f'({STACK_SIZE})'):
+            street = line.split(' ')[0]
         elif 'awarded' in line:
-            deltas[line[0]][round_num] = int(line.split(' ')[-1])
-        elif 'folds' in line and first_action[line[0]]:
-            if only_folding[line[0]] is None:
+            awarded = int(line.split(' ')[-1])
+            deltas[line[0]][round_num] = awarded
+            won_by_street[line[0]][street] += awarded
+        elif 'folds' in line:
+            if only_folding[line[0]] is None and first_action[line[0]]:
                 only_folding[line[0]] = round_num
+                won_by_street_checkpoint = copy.deepcopy(won_by_street)
         elif ('bets' in line or 'calls' in line or 'raises' in line) and first_action[line[0]]:
             only_folding[line[0]] = None
             first_action[line[0]] = False
@@ -66,11 +81,13 @@ def parse_logs(path):
     max_round = round_num
     if only_folding['A'] is not None or only_folding['B'] is not None:
         max_round = min([only_folding[k] for k in only_folding if only_folding[k] is not None])
+    else:
+        won_by_street_checkpoint = won_by_street
     
     # sort hand logs by amount won/lost
     histories = [s for _, s in sorted(zip(np.abs(deltas['A'][1:]), histories), reverse=True)]
 
-    return deltas, histories, max_round
+    return deltas, histories, won_by_street_checkpoint, max_round
 
 def plot_chips(deltas, max_round, filepath):
     '''
@@ -106,6 +123,23 @@ def plot_delta_hist(deltas, max_round, filepath, bins=80):
     plt.tight_layout()
     plt.savefig(filepath)
 
+def plot_won_by_street(won_by_street, filepath):
+    '''
+    Plot histogram of pots won by street.
+    '''
+    plt.figure()
+    plt.title('Distribution of pots won by street')
+    for l in ['A']:
+        w = won_by_street[l]
+        plt.bar(list(w.keys()), list(w.values()), alpha=0.5, label=l)
+
+    plt.legend(loc='best')
+    plt.xlabel('Street')
+    plt.ylabel('Amount won [chips]')
+    plt.grid(which='both')
+    plt.tight_layout()
+    plt.savefig(filepath)
+
 if __name__ == "__main__":
     # command line arguments
     parser = argparse.ArgumentParser()
@@ -129,11 +163,12 @@ if __name__ == "__main__":
     out_prefix = args.out if args.out else f"output/{os.path.splitext(os.path.basename(args.logpath))[0]}"
 
     # parse logs
-    deltas, histories, max_round = parse_logs(args.logpath)
+    deltas, histories, won_by_street, max_round = parse_logs(args.logpath)
 
     # plot
     plot_chips(deltas, max_round, f'{out_prefix}_chips.png')
     plot_delta_hist(deltas, max_round, f'{out_prefix}_deltas.png')
+    plot_won_by_street(won_by_street, f'{out_prefix}_won_by_street.png')
 
     # save hand histories sorted by amount won/lost
     with open(f'{out_prefix}_sorted.txt', 'w') as file:
