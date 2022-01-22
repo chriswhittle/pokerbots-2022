@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NBUCKETS=500
+NBUCKETS=150
 
 set -x
 

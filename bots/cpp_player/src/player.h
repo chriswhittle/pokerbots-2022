@@ -126,7 +126,7 @@ int map_bet_to_infoset_bet(int bet, int pot, const BoardActionHistory& history) 
 int new_card_infostate(int street,
     array<int, HAND_SIZE> hand_cards,
     vector<int> board_cards,
-    DataContainer &data,
+    const DataContainer &data,
     int n_mc_iter,
     ULL common_dead,
     ULL villain_dead) {

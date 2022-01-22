@@ -14,13 +14,17 @@ using namespace pokerbots::skeleton;
 using namespace std::chrono;
 
 #include "player.h"
+#include "subgame.h"
+
+const int N_MC_ITER = 10000;
+const bool VERBOSE = false;
 
 // the bot will expect an unordered_map<ULL, CFRInfosetPure> infoset
 // if the following is set (else unordered_map<ULL, CFRInfoset>)
 #define PLAYER_USE_PURE
 
-const int N_MC_ITER = 10000;
-const bool VERBOSE = false;
+// should the bot attempt to solve the river subgame?
+const bool SOLVE_RIVER_SUBGAME = false;
 
 struct Bot {
     int net_lead = 0;
@@ -42,6 +46,8 @@ struct Bot {
     #endif
 
     BoardActionHistory history;
+
+    bool subgame_solved = false;
 
     time_point<high_resolution_clock> _start;
     double _bot_time = 0.0;
@@ -86,6 +92,9 @@ struct Bot {
         // empty our memory of the boards
         board_cards.clear();
 
+        // river subgame still needs to be solved
+        subgame_solved = false;
+
         auto _timer_end = high_resolution_clock::now();
         _bot_time += duration_cast<microseconds>(_timer_end - _timer_start).count() / 1000000.0;
 
@@ -124,8 +133,6 @@ struct Bot {
 
         int proposed_pip = 0;
         int continue_cost = 0;
-
-        int proposed_internal_action = 0;
 
         if (VERBOSE) {
             cout << "<<Stacks = " << stack << ", " << villain_stack
@@ -209,6 +216,22 @@ struct Bot {
             }
         }
 
+        // realtime solve river subgame
+        if (SOLVE_RIVER_SUBGAME && street == 5 && !subgame_solved) {
+            auto realtime_start = high_resolution_clock::now();
+
+            // build subtime object and run CFR
+            Subgame subgame(board_cards, history, data, infosets);
+            subgame.solve();
+
+            // mark river subgame as solved
+            subgame_solved = true;
+            cout << "Subgame routine executed in " << 
+                    (duration_cast<std::chrono::milliseconds>(
+                        high_resolution_clock::now() - realtime_start
+                    ).count()) << " ms." << endl;
+        }
+
         vector<int> available_actions = history.get_available_actions();
 
         // check that our internal state isn't ahead of the engine
@@ -268,12 +291,8 @@ struct Bot {
         history.update(action);
 
         // convert the proposed action to an action for the engine
-        // don't update bet histories in case we re-assign
-        // (since can't bet more than opponent stack, we have to
-        // leave some behind)
         proposed_action = map_infoset_action_to_action(
             action, pip, villain_pip, pot, stack, villain_stack);
-        proposed_internal_action = action;
 
         if (VERBOSE) {
             cout << "Board: " << proposed_action << endl;
