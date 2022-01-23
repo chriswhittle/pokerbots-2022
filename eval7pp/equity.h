@@ -15,7 +15,19 @@ extern thread_local mt19937 gen;
 // minstd_rand gen(rd()); // should be much faster than Mersenne, at the cost of quality
 
 inline int sample_card_dist() {
-  return gen() % 52;
+    return gen() % 52;
+}
+
+inline int sample_card_dist(unsigned long long dead) {
+    unsigned int ind;
+    unsigned long long choice;
+
+    while (true) {
+    ind = sample_card_dist();
+    choice = CARD_MASKS_TABLE[ind];
+    if ((dead & choice) == 0)
+        return ind;
+    }
 }
 
 template <typename T, size_t N>
