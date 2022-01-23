@@ -300,6 +300,15 @@ struct Bot {
         proposed_action = map_infoset_action_to_action(
             action, pip, villain_pip, pot, stack, villain_stack);
 
+        // if we think we're calling a shove but the real action is not a shove,
+        // should just shove ourselves so we don't misplay future streets
+        if (history.finished &&
+            history.pot == STARTING_STACK*2 &&
+            villain_stack > 0) {
+            if (VERBOSE) cout << "Internally all in, shove to match." << endl;
+            return Action(Action::RAISE, pip + stack);
+        }
+
         if (VERBOSE) {
             cout << "Board: " << proposed_action << endl;
             cout << endl;
