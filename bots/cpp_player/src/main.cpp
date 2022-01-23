@@ -120,6 +120,12 @@ struct Bot {
         }
     }
     
+
+    void updateBotTime(time_point<high_resolution_clock> _timer_start) {
+        auto _timer_end = high_resolution_clock::now();
+        _bot_time += duration_cast<microseconds>(_timer_end - _timer_start).count() / 1000000.0;
+    }
+
     Action getAction(
             GameInfoPtr gameState, RoundStatePtr roundState, int active) {
         auto _timer_start = high_resolution_clock::now();
@@ -167,16 +173,20 @@ struct Bot {
             }
 
             cout << "Check/folding to win." << endl;
+
+            updateBotTime(_timer_start);
             return proposed_action;
 
         }
 
-        // opponent folded, board is settled or we're out of chips
+        // if both players are all in
         if ((legal_actions.size() == 1 && in_set(legal_actions, Action::CHECK)
             && std::dynamic_pointer_cast<const TerminalState>(roundState))
             || stack == 0) {
             proposed_action = Action::CHECK;
-            if (VERBOSE) cout << "Folded, board settled or out of chips." << endl;
+            if (VERBOSE) cout << "Both players all in, check." << endl;
+            
+            updateBotTime(_timer_start);
             return proposed_action;
         }
 
@@ -216,24 +226,6 @@ struct Bot {
             }
         }
 
-        // realtime solve river subgame
-        if (SOLVE_RIVER_SUBGAME && street == 5 && !subgame_solved) {
-            auto realtime_start = high_resolution_clock::now();
-
-            // build subtime object and run CFR
-            Subgame subgame(board_cards, history, data, infosets);
-            subgame.solve();
-
-            // mark river subgame as solved
-            subgame_solved = true;
-            cout << "Subgame routine executed in " << 
-                    (duration_cast<std::chrono::milliseconds>(
-                        high_resolution_clock::now() - realtime_start
-                    ).count()) << " ms." << endl;
-        }
-
-        vector<int> available_actions = history.get_available_actions();
-
         // check that our internal state isn't ahead of the engine
         if (history.street == 1 && street < 3 ||
             history.street == 2 && street < 4 ||
@@ -250,8 +242,22 @@ struct Bot {
                 continue_cost = villain_pip - pip;
                 proposed_pip = continue_cost;
             }
+            
+            updateBotTime(_timer_start);
             return proposed_action;
         }
+
+        // realtime solve river subgame
+        if (SOLVE_RIVER_SUBGAME && street == 5 && !subgame_solved) {
+            // build subtime object and run CFR
+            Subgame subgame(board_cards, history, data, infosets);
+            subgame.solve();
+
+            // mark river subgame as solved
+            subgame_solved = true;
+        }
+
+        vector<int> available_actions = history.get_available_actions();
 
         // fetch appropriate infoset
         unsigned long long key = info_to_key(history.ind ^ history.button,
@@ -299,9 +305,7 @@ struct Bot {
             cout << endl;
         }
 
-        auto _timer_end = high_resolution_clock::now();
-        _bot_time += duration_cast<microseconds>(_timer_end - _timer_start).count() / 1000000.0;
-        
+        updateBotTime(_timer_start);
         return  proposed_action;
     }
 
