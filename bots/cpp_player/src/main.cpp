@@ -24,7 +24,7 @@ const bool VERBOSE = false;
 #define PLAYER_USE_PURE
 
 // should the bot attempt to solve the river subgame?
-const bool SOLVE_RIVER_SUBGAME = false;
+const bool SOLVE_RIVER_SUBGAME = false_type;
 
 struct Bot {
     int net_lead = 0;
@@ -47,12 +47,13 @@ struct Bot {
 
     BoardActionHistory history;
 
+    Subgame subgame;
     bool subgame_solved = false;
 
     time_point<high_resolution_clock> _start;
     double _bot_time = 0.0;
 
-    Bot() : data() {
+    Bot() : data(), subgame(history, data, empty_pure_infosets) {
         _start = high_resolution_clock::now();
         // load equity data
         // load flop buckets from binary
@@ -247,17 +248,33 @@ struct Bot {
             return proposed_action;
         }
 
-        // realtime solve river subgame
-        if (SOLVE_RIVER_SUBGAME && street == 5 && !subgame_solved) {
-            // build subtime object and run CFR
-            Subgame subgame(board_cards, history, data, infosets);
-            subgame.solve();
-
-            // mark river subgame as solved
-            subgame_solved = true;
-        }
-
         vector<int> available_actions = history.get_available_actions();
+
+        // realtime solve river subgame
+        if (SOLVE_RIVER_SUBGAME && street == 5) {
+            // build subtime object and run CFR
+            if (!subgame_solved) {
+                Subgame subgame(board_cards, history, data, infosets);
+                subgame.solve();
+
+                // mark river subgame as solved
+                subgame_solved = true;
+            }
+
+            // get subgame solution
+            ULL key = info_to_key(history.ind ^ history.button,
+                                    history.street,
+                                    get_cards_info_state_preflop(hand_indices),
+                                    history);
+            auto subgame_infoset = fetch_infoset(
+                subgame.subgame_infosets, key, available_actions.size()
+            );
+            if (VERBOSE) {
+                cout << "SUBGAME STRATEGY: " << subgame_infoset.cumu_strategy << endl;
+                cout << "(visited " << subgame_infoset.t << " times in subgame)" << endl << endl;
+            }
+
+        }
 
         // fetch appropriate infoset
         unsigned long long key = info_to_key(history.ind ^ history.button,
