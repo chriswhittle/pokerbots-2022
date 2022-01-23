@@ -17,6 +17,10 @@ const int DECK_SIZE = 52;
 const int SUBGAME_MC_ITER = 300;
 
 const int SUBGAME_CFR_ITER = 100000;
+// sacrifices accuracy in weighting of hands in each range when cards are swapped
+// (assumes uniform distribution in hands on the turn, for example, instead of
+// weighting by probability that we swap into each hand based on flop range)
+const bool FAST_DEALING = true;
 
 random_device SUB_RD;
 mt19937 SUB_GEN(SUB_RD());
@@ -178,32 +182,40 @@ struct Subgame {
             swapped_hand_indices = new_hand_indices;
 
             array<bool, 2> valid_hand = {true, true};
-            for (int s = 1; s >= 0; s--) {
-                if (swaps[s] == 1) {
-                    // draw new card for pre/flop
-                    new_card = sample_card_dist(dead | new_hand_mask);
-                    swapped_hand_indices[SUB_GEN() % HAND_SIZE] = new_card;
-                    new_hand_mask |= CARD_MASKS_TABLE[new_card];
+            // now randomly swap a card and see if it's in our pre/flop
+            // range.
+            // doing the full swap ensures that we're sampling the cards in our
+            // turn range at the right frequency
+            // (e.g. if turn range is [AK, KQ] but we have a lot of Ax on the
+            // flop, we should sample AK more frequently)
+            if (!FAST_DEALING) {
+                for (int s = 1; s >= 0; s--) {
+                    if (swaps[s] == 1) {
+                        // draw new card for pre/flop
+                        new_card = sample_card_dist(dead | new_hand_mask);
+                        swapped_hand_indices[SUB_GEN() % HAND_SIZE] = new_card;
+                        new_hand_mask |= CARD_MASKS_TABLE[new_card];
 
-                    // swapped card is valid if the new hand is in our:
-                    // 1) flop range if we also swapped pre->flop
-                    if (s == 1 && swaps[0] == 1) {
-                        sub_range = flop_range[player];
+                        // swapped card is valid if the new hand is in our:
+                        // 1) flop range if we also swapped pre->flop
+                        if (s == 1 && swaps[0] == 1) {
+                            sub_range = flop_range[player];
+                        }
+                        // 2) intersection of pre/flop range if we didn't swap pre->flop
+                        else if (s == 1) {
+                            sub_range = pre_flop_range[player];
+                        }
+                        // 3) pre range if we're looking at flop swaps
+                        else {
+                            sub_range = pre_range[player];
+                        }
+                        
+                        // valid for this swap if it's in the previous range
+                        valid_hand[s] = (
+                            sub_range.find(swapped_hand_indices) 
+                            != sub_range.end()
+                        );
                     }
-                    // 2) intersection of pre/flop range if we didn't swap pre->flop
-                    else if (s == 1) {
-                        sub_range = pre_flop_range[player];
-                    }
-                    // 3) pre range if we're looking at flop swaps
-                    else {
-                        sub_range = pre_range[player];
-                    }
-                    
-                    // valid for this swap if it's in the previous range
-                    valid_hand[s] = (
-                        sub_range.find(swapped_hand_indices) 
-                        != sub_range.end()
-                    );
                 }
             }
 
@@ -371,15 +383,19 @@ struct Subgame {
         // CFR iterations
         pair<double, double> train_val = {0, 0};
         time_point<high_resolution_clock> cfr_start = high_resolution_clock::now();
+        int deal_time = 0;
         for (int i = 0; i < subgame_cfr_iter; i++) {
             // deal hands for each player
             array<array<int, HAND_SIZE>, 2> cfr_hand_indices;
             array<ULL, 2> cfr_hand_masks = {0, 0};
+            time_point<high_resolution_clock> cfr_deal_start = high_resolution_clock::now();
             for (int p = 0; p < 2; p++) {
                 cfr_hand_indices[p] = deal_subgame_hand(0, cfr_hand_masks[0]);
                 cfr_hand_masks[p] = CARD_MASKS_TABLE[cfr_hand_indices[p][0]]
                         | CARD_MASKS_TABLE[cfr_hand_indices[p][1]];
             }
+            deal_time += (duration_cast<std::chrono::microseconds>(
+                            high_resolution_clock::now() - cfr_deal_start).count());
 
             // determine winner given hands
             int winner = evaluate(cfr_hand_masks[0] | board_mask, 7)
@@ -397,7 +413,7 @@ struct Subgame {
         cout << "Final value for river subgame = " << train_val;
         cout << " (" << (duration_cast<std::chrono::milliseconds>(
                             high_resolution_clock::now() - cfr_start).count());
-        cout << " ms)" << endl;
+        cout << " ms total; " << deal_time << " us dealing)." << endl;
 
     }
 
